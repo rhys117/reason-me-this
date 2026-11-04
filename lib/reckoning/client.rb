@@ -4,10 +4,27 @@ require 'reckoning/client/answer'
 require 'reckoning/client/errors'
 require 'reckoning/client/explanation'
 require 'reckoning/client/connection'
+require 'reckoning/client/configuration'
+require 'forwardable'
 
 module Reckoning
   class Client
-    def initialize(connection:)
+    class << self
+      extend Forwardable
+
+      def_delegators :default, :run, :explain, :push, :publish, :definitions, :definition
+
+      def configure
+        yield configuration
+        @default = nil
+      end
+
+      def configuration = @configuration ||= Configuration.new
+
+      def default = @default ||= new(**configuration.to_h.compact)
+    end
+
+    def initialize(url: nil, api_key: nil, connection: Connection.new(url, api_key))
       @connection = connection
     end
 
