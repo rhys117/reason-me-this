@@ -15,7 +15,7 @@ module Reckoning
         deep(value) do |leaf|
           case leaf
           when NUMBER then BigDecimal(leaf)
-          when DATE then Date.iso8601(leaf)
+          when DATE then date(leaf)
           else leaf
           end
         end
@@ -30,6 +30,12 @@ module Reckoning
           else leaf
           end
         end
+      end
+
+      def date(text)
+        Date.iso8601(text)
+      rescue Date::Error
+        text
       end
 
       def deep(value, &)

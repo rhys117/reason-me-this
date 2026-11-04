@@ -9,6 +9,10 @@ RSpec.describe Reckoning::Client::Answer do
                               by_quarter: [{start: Date.new(2026, 1, 1), payout: BigDecimal('5000')}], version: 3)
   end
 
+  it 'keeps a string shaped like a date that is not one' do
+    expect(described_class.new('code' => '2026-13-45')[:code]).to eq('2026-13-45')
+  end
+
   it 'reads an output by method, symbol or string' do
     expect([answer.total_paid, answer[:total_paid], answer['total_paid']]).to all(eq(BigDecimal('55830')))
   end
