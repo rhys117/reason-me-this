@@ -6,7 +6,6 @@ Gem::Specification.new do |spec|
   spec.authors = ['Rhys Murray']
   spec.summary = 'Call a hosted Reckoning service from Ruby'
   spec.description = 'Runs, explains, pushes and publishes Reckoning definitions over HTTP, keeping numbers exact.'
-  spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.4'
   spec.files = Dir['lib/**/*.rb', 'README.md']
   spec.require_paths = ['lib']

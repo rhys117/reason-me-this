@@ -1,0 +1,61 @@
+{
+  "by_quarter": [
+    {
+      "start": "2026-01-01",
+      "finish": "2026-03-31",
+      "quota": "60000",
+      "target_incentive": "10000",
+      "draw": "5000",
+      "credited": "48000",
+      "attainment": "0.8",
+      "commission": "3300",
+      "spiffs": "1000",
+      "earned": "4300",
+      "payout": "5000",
+      "balance_after": "700"
+    },
+    {
+      "start": "2026-04-01",
+      "finish": "2026-06-30",
+      "quota": "100000",
+      "target_incentive": "10000",
+      "draw": "5000",
+      "credited": "103000",
+      "attainment": "1.03",
+      "commission": "7950",
+      "spiffs": "1000",
+      "earned": "8950",
+      "payout": "8250",
+      "balance_after": "0"
+    },
+    {
+      "start": "2026-07-01",
+      "finish": "2026-09-30",
+      "quota": "120000",
+      "target_incentive": "12000",
+      "credited": "126000",
+      "attainment": "1.05",
+      "commission": "10080",
+      "spiffs": "1500",
+      "earned": "11580",
+      "payout": "11580",
+      "balance_after": "0"
+    },
+    {
+      "start": "2026-10-01",
+      "finish": "2026-12-31",
+      "quota": "150000",
+      "target_incentive": "12000",
+      "credited": "270000",
+      "attainment": "1.8",
+      "commission": "30000",
+      "spiffs": "1000",
+      "earned": "31000",
+      "payout": "31000",
+      "balance_after": "0"
+    }
+  ],
+  "total_earned": "55830",
+  "total_paid": "55830",
+  "closing_balance": "0"
+}

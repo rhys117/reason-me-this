@@ -7,7 +7,12 @@ AllCops:
   DisplayCopNames: true
   SuggestExtensions: false
   Exclude:
-    - 'examples/**/*'
+    - 'examples/*/bin/**/*'
+    - 'examples/*/config/environments/**/*'
+    - 'examples/*/config/puma.rb'
+    - 'examples/*/db/schema.rb'
+    - 'examples/*/log/**/*'
+    - 'examples/*/tmp/**/*'
     - 'vendor/**/*'
 
 Layout/DotPosition:
@@ -101,5 +106,4 @@ RSpec/NamedSubject:
 
 RSpec/DescribeClass:
   Exclude:
-    - 'spec/acceptance/**/*'
     - 'spec/requests/**/*'

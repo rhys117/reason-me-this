@@ -1,0 +1,48 @@
+<% content_for :title, "#{@rep.name}, #{@year}" %>
+
+<p><%= link_to "All reps", root_path %></p>
+<h1><%= @rep.name %>: commission for <%= @year %></h1>
+
+<% if @problem %>
+  <p class="problem"><%= @problem %></p>
+<% else %>
+  <table>
+    <thead>
+      <tr>
+        <th>Quarter</th>
+        <th>Quota</th>
+        <th>Credited</th>
+        <th>Attainment</th>
+        <th>Commission</th>
+        <th>SPIFFs</th>
+        <th>Earned</th>
+        <th>Paid</th>
+        <th>Draw owed after</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @statement[:by_quarter].each do |quarter| %>
+        <tr>
+          <td><%= quarter[:start].strftime("%b %-d") %> to <%= quarter[:finish].strftime("%b %-d") %></td>
+          <td><%= dollars quarter[:quota] %></td>
+          <td><%= dollars quarter[:credited] %></td>
+          <td><%= number_to_percentage quarter[:attainment] * 100, precision: 0 %></td>
+          <td><%= dollars quarter[:commission] %></td>
+          <td><%= dollars quarter[:spiffs] %></td>
+          <td><%= dollars quarter[:earned] %></td>
+          <td><%= dollars quarter[:payout] %></td>
+          <td><%= dollars quarter[:balance_after] %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <dl>
+    <dt>Total earned</dt>
+    <dd><%= dollars @statement.total_earned %></dd>
+    <dt>Total paid</dt>
+    <dd><%= dollars @statement.total_paid %></dd>
+    <dt>Draw still owed</dt>
+    <dd><%= dollars @statement.closing_balance %></dd>
+  </dl>
+<% end %>
