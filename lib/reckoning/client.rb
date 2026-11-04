@@ -5,6 +5,7 @@ require 'reckoning/client/errors'
 require 'reckoning/client/explanation'
 require 'reckoning/client/connection'
 require 'reckoning/client/configuration'
+require 'reckoning/client/model'
 require 'forwardable'
 
 module Reckoning
