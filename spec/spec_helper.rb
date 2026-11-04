@@ -1,4 +1,5 @@
 require 'reckoning/client'
+require_relative 'support/fake_connection'
 
 RSpec.configure do |config|
   config.disable_monkey_patching!
