@@ -36,7 +36,7 @@ RSpec.describe Reckoning::Client::Connection do
   end
 
   it 'raises Unreachable when nothing answers' do
-    port = TCPServer.new('127.0.0.1', 0).then { |server| server.addr[1].tap { server.close } }
+    port = closed_port
 
     expect { described_class.new("http://127.0.0.1:#{port}", 'k').request(:get, '/definitions') }.
       to raise_error(Reckoning::Client::Unreachable, %r{could not reach the service at http://127\.0\.0\.1:#{port}})

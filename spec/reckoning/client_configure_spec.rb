@@ -1,5 +1,3 @@
-require 'socket'
-
 RSpec.describe Reckoning::Client do
   let(:connection) { FakeConnection.new(200, 'total' => '2.3') }
 
@@ -13,7 +11,7 @@ RSpec.describe Reckoning::Client do
   end
 
   it 'connects to the configured URL with the configured key' do
-    port = TCPServer.new('127.0.0.1', 0).then { |server| server.addr[1].tap { server.close } }
+    port = closed_port
     described_class.configure do |config|
       config.url = "http://127.0.0.1:#{port}/api"
       config.api_key = 'secret'
@@ -23,7 +21,7 @@ RSpec.describe Reckoning::Client do
   end
 
   it 'builds a client of its own for a URL and key, for an app with more than one service' do
-    port = TCPServer.new('127.0.0.1', 0).then { |server| server.addr[1].tap { server.close } }
+    port = closed_port
 
     expect { described_class.new(url: "http://127.0.0.1:#{port}/api", api_key: 'k').publish('bill') }.
       to raise_error(described_class::Unreachable, /#{port}/)
