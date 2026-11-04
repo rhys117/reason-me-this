@@ -1,0 +1,1 @@
+require 'reckoning/client/version'
