@@ -3,6 +3,7 @@ require 'reckoning/client/values'
 require 'reckoning/client/answer'
 require 'reckoning/client/errors'
 require 'reckoning/client/explanation'
+require 'reckoning/client/connection'
 
 module Reckoning
   class Client

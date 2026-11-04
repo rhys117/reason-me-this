@@ -1,5 +1,7 @@
 require 'bigdecimal'
 require 'date'
+require 'json'
+require 'time'
 
 module Reckoning
   class Client
@@ -15,6 +17,17 @@ module Reckoning
         when Array then value.map { |item| read(item) }
         when NUMBER then BigDecimal(value)
         when DATE then Date.iso8601(value)
+        else value
+        end
+      end
+
+      # A decimal goes out as a JSON number written in full, so the service reads the value that was typed.
+      def write(value)
+        case value
+        when Hash then value.transform_values { |item| write(item) }
+        when Array then value.map { |item| write(item) }
+        when BigDecimal then JSON::Fragment.new(value.to_s('F'))
+        when Date, Time then value.iso8601
         else value
         end
       end
