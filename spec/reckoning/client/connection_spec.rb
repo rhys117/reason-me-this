@@ -41,4 +41,9 @@ RSpec.describe Reckoning::Client::Connection do
     expect { described_class.new("http://127.0.0.1:#{port}", 'k').request(:get, '/definitions') }.
       to raise_error(Reckoning::Client::Unreachable, %r{could not reach the service at http://127\.0\.0\.1:#{port}})
   end
+
+  it 'says so when no URL is configured' do
+    expect { described_class.new(nil, nil).request(:get, '/definitions') }.
+      to raise_error(Reckoning::Client::Error, 'no URL is configured for the Reckoning service')
+  end
 end

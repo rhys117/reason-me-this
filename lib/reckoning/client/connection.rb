@@ -11,6 +11,8 @@ module Reckoning
       end
 
       def request(method, path, body = nil)
+        raise Error.new('no URL is configured for the Reckoning service') if @url.empty?
+
         uri = URI("#{@url}#{path}")
         response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https', open_timeout: 10, read_timeout: 60) do |http|
           http.request(build(method, uri, body))
