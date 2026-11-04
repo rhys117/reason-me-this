@@ -1,0 +1,7 @@
+<h1>Reps</h1>
+
+<ul>
+  <% @reps.each do |rep| %>
+    <li><%= link_to rep.name, rep_path(rep) %></li>
+  <% end %>
+</ul>
