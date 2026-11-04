@@ -13,21 +13,23 @@ module Reckoning
     def run(name, facts, calculation: nil, version: nil, trace: false)
       name, pinned = name.to_s.split('@', 2)
       version ||= pinned&.match?(/\A\d+\z/) ? Integer(pinned) : pinned
-      answer = request(:post, "/definitions/#{name}/run", {facts:, calculation:, version:, trace: (true if trace)}.compact)
+      answer = request(:post, at(name, :run), {facts:, calculation:, version:, trace: (true if trace)}.compact)
       trace ? Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps]) : Answer.new(answer)
     end
 
     def explain(name, facts, calculation: nil, version: nil) = run(name, facts, calculation:, version:, trace: true)
 
-    def push(name, yaml:, cases: '') = request(:put, "/definitions/#{name}", {yaml:, cases:}, invalid: Rejected)
+    def push(name, yaml:, cases: '') = request(:put, at(name), {yaml:, cases:}, invalid: Rejected)
 
-    def publish(name) = request(:post, "/definitions/#{name}/publish", invalid: Rejected)[:version]
+    def publish(name) = request(:post, at(name, :publish), invalid: Rejected)[:version]
 
     def definitions = request(:get, '/definitions')[:definitions]
 
-    def definition(name) = request(:get, "/definitions/#{name}")
+    def definition(name) = request(:get, at(name))
 
     private
+
+    def at(name, *action) = ['/definitions', name, *action].join('/')
 
     def request(method, path, body = nil, invalid: InvalidFacts)
       status, answer = @connection.request(method, path, body)
