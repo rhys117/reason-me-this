@@ -7,12 +7,25 @@ module Reckoning
     class Timeout < Error; end
     class Unreachable < Error; end
 
-    class InvalidFacts < Error
-      attr_reader :problems
+    class Refused < Error
+      attr_reader :report
 
-      def initialize(problems)
-        @problems = problems
-        super("the facts have problems: #{problems.join('; ')}")
+      def initialize(report)
+        @report = report
+        super(message)
+      end
+
+      def problems = report.fetch(:problems, [])
+    end
+
+    class InvalidFacts < Refused
+      def message = "the facts have problems: #{problems.join('; ')}"
+    end
+
+    class Rejected < Refused
+      def message
+        failed = "#{report[:failed]} cases failed" if report[:failed].to_i.positive?
+        "the definition was not accepted: #{[*problems, failed].compact.join('; ')}"
       end
     end
   end

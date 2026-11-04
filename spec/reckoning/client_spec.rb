@@ -40,6 +40,72 @@ RSpec.describe Reckoning::Client do
     end
   end
 
+  describe '#push' do
+    let(:body) { {'problems' => [], 'passed' => 2, 'failed' => 0, 'cases' => []} }
+
+    it 'saves the draft and answers its report' do
+      report = client.push('bill', yaml: 'calculations: {}', cases: '[]')
+
+      expect(report).to eq(problems: [], passed: 2, failed: 0, cases: [])
+      expect(connection.requests).to eq([[:put, '/definitions/bill', {yaml: 'calculations: {}', cases: '[]'}]])
+    end
+
+    it 'sends no cases when none are given' do
+      client.push('bill', yaml: 'calculations: {}')
+
+      expect(connection.requests.last.last).to eq(yaml: 'calculations: {}', cases: '')
+    end
+
+    context 'when the draft has problems' do
+      let(:status) { 422 }
+      let(:body) { {'problems' => ['calculations is missing']} }
+
+      it 'raises Rejected with the report' do
+        expect { client.push('bill', yaml: '') }.to raise_error(Reckoning::Client::Rejected) do |error|
+          expect(error.message).to eq('the definition was not accepted: calculations is missing')
+          expect(error.report).to eq(problems: ['calculations is missing'])
+        end
+      end
+    end
+  end
+
+  describe '#publish' do
+    let(:status) { 201 }
+    let(:body) { {'version' => 4} }
+
+    it 'publishes the draft and answers its version number' do
+      expect(client.publish('bill')).to eq(4)
+      expect(connection.requests).to eq([[:post, '/definitions/bill/publish', nil]])
+    end
+
+    context 'when a case fails' do
+      let(:status) { 422 }
+      let(:body) { {'problems' => [], 'passed' => 1, 'failed' => 2, 'cases' => []} }
+
+      it 'raises Rejected saying how many cases failed' do
+        expect { client.publish('bill') }.to raise_error(Reckoning::Client::Rejected, 'the definition was not accepted: 2 cases failed')
+      end
+    end
+  end
+
+  describe '#definitions' do
+    let(:body) { {'definitions' => [{'name' => 'bill', 'published_version' => 3, 'updated_at' => '2026-11-04T10:00:00Z'}]} }
+
+    it 'lists the definitions on the service' do
+      expect(client.definitions).to eq([{name: 'bill', published_version: 3, updated_at: '2026-11-04T10:00:00Z'}])
+      expect(connection.requests).to eq([[:get, '/definitions', nil]])
+    end
+  end
+
+  describe '#definition' do
+    let(:body) { {'name' => 'bill', 'yaml' => 'calculations: {}', 'cases' => '[]', 'published_version' => 3} }
+
+    it 'reads one definition with its draft and cases' do
+      expect(client.definition('bill')).to eq(name: 'bill', yaml: 'calculations: {}', cases: '[]', published_version: 3)
+      expect(connection.requests).to eq([[:get, '/definitions/bill', nil]])
+    end
+  end
+
   describe 'when the service refuses' do
     {
       [401, {'error' => 'unauthorized'}] => [Reckoning::Client::Unauthorized, 'the service refused the API key'],
