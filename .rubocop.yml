@@ -106,5 +106,4 @@ RSpec/NamedSubject:
 
 RSpec/DescribeClass:
   Exclude:
-    - 'spec/acceptance/**/*'
     - 'spec/requests/**/*'
