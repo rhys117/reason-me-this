@@ -12,23 +12,31 @@ module Reckoning
       module_function
 
       def read(value)
-        case value
-        when Hash then value.to_h { |key, item| [key.to_sym, read(item)] }
-        when Array then value.map { |item| read(item) }
-        when NUMBER then BigDecimal(value)
-        when DATE then Date.iso8601(value)
-        else value
+        deep(value) do |leaf|
+          case leaf
+          when NUMBER then BigDecimal(leaf)
+          when DATE then Date.iso8601(leaf)
+          else leaf
+          end
         end
       end
 
       # A decimal goes out as a JSON number written in full, so the service reads the value that was typed.
       def write(value)
+        deep(value) do |leaf|
+          case leaf
+          when BigDecimal then JSON::Fragment.new(leaf.to_s('F'))
+          when Date, Time then leaf.iso8601
+          else leaf
+          end
+        end
+      end
+
+      def deep(value, &)
         case value
-        when Hash then value.transform_values { |item| write(item) }
-        when Array then value.map { |item| write(item) }
-        when BigDecimal then JSON::Fragment.new(value.to_s('F'))
-        when Date, Time then value.iso8601
-        else value
+        when Hash then value.to_h { |key, item| [key.is_a?(String) ? key.to_sym : key, deep(item, &)] }
+        when Array then value.map { |item| deep(item, &) }
+        else yield value
         end
       end
     end
