@@ -8,8 +8,10 @@ module Reckoning
       @connection = connection
     end
 
-    def run(name, facts, calculation: nil)
-      _status, outputs = @connection.request(:post, "/definitions/#{name}/run", {facts:, calculation:}.compact)
+    def run(name, facts, calculation: nil, version: nil)
+      name, pinned = name.to_s.split('@', 2)
+      version ||= pinned&.match?(/\A\d+\z/) ? Integer(pinned) : pinned
+      _status, outputs = @connection.request(:post, "/definitions/#{name}/run", {facts:, calculation:, version:}.compact)
       Answer.new(outputs)
     end
   end
