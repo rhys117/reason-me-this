@@ -2,6 +2,7 @@ require 'reckoning/client/version'
 require 'reckoning/client/values'
 require 'reckoning/client/answer'
 require 'reckoning/client/errors'
+require 'reckoning/client/explanation'
 
 module Reckoning
   class Client
@@ -9,11 +10,14 @@ module Reckoning
       @connection = connection
     end
 
-    def run(name, facts, calculation: nil, version: nil)
+    def run(name, facts, calculation: nil, version: nil, trace: false)
       name, pinned = name.to_s.split('@', 2)
       version ||= pinned&.match?(/\A\d+\z/) ? Integer(pinned) : pinned
-      Answer.new(request(:post, "/definitions/#{name}/run", {facts:, calculation:, version:}.compact))
+      answer = request(:post, "/definitions/#{name}/run", {facts:, calculation:, version:, trace: (true if trace)}.compact)
+      trace ? Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps]) : Answer.new(answer)
     end
+
+    def explain(name, facts, calculation: nil, version: nil) = run(name, facts, calculation:, version:, trace: true)
 
     private
 

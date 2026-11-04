@@ -28,6 +28,18 @@ RSpec.describe Reckoning::Client do
     end
   end
 
+  describe '#explain' do
+    let(:body) { {'outputs' => {'total' => '2.3'}, 'steps' => [{'step' => 'total', 'value' => '2.3'}]} }
+
+    it 'runs with a trace and answers the outputs with the steps that made them' do
+      explained = client.explain('bill', {hours: 2}, calculation: :invoice)
+
+      expect(explained.outputs.total).to eq(BigDecimal('2.3'))
+      expect(explained.steps).to eq([{step: 'total', value: BigDecimal('2.3')}])
+      expect(connection.requests.last.last).to eq(facts: {hours: 2}, calculation: :invoice, trace: true)
+    end
+  end
+
   describe 'when the service refuses' do
     {
       [401, {'error' => 'unauthorized'}] => [Reckoning::Client::Unauthorized, 'the service refused the API key'],
