@@ -1,11 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe Rep do
-  let(:rep) do
-    load Rails.root.join('db/seeds.rb')
-    described_class.find_by!(name: 'Avery Quinn')
-  end
-
   it "works out the year's statement from the rep's deals, cancellations and quarter targets" do
     statement = rep.statement(2026)
 

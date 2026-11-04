@@ -1,11 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe 'A rep statement' do
-  let(:rep) do
-    load Rails.root.join('db/seeds.rb')
-    Rep.find_by!(name: 'Avery Quinn')
-  end
-
   it 'lists the reps' do
     rep
     get root_path
