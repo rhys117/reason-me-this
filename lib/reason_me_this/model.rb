@@ -4,7 +4,7 @@ module ReasonMeThis
 
     module ClassMethods
       def reasons(name, with:, calculation: nil, &)
-        reasoned[name] = Recipe.new(with:, calculation:, &)
+        reasoned[name] = Recipe.build(with:, calculation:, &)
         {name => :run, "#{name}_explained": :explain}.each do |method, call|
           define_method(method) { |*args| reasonings[[method, args]] ||= reasoning(name, call, args) }
         end
@@ -34,7 +34,7 @@ module ReasonMeThis
 
     def reasoning(name, call, args)
       recipe = self.class.reasoned.fetch(name)
-      reason_me_this_client.public_send(call, recipe.with, instance_exec(*args, &recipe.facts), calculation: recipe.calculation)
+      reason_me_this_client.public_send(call, recipe.blueprint, instance_exec(*args, &recipe.facts), calculation: recipe.calculation)
     end
 
     def transactionally(&) = self.class.respond_to?(:transaction) ? self.class.transaction(&) : yield
