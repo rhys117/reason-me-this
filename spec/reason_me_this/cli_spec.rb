@@ -118,14 +118,16 @@ RSpec.describe ReasonMeThis::CLI do
   describe 'describe and guide' do
     def catalogue
       {'steps' => {'formula' => {'purpose' => 'work out a value', 'example' => '- name: x'}}, 'input_types' => {}, 'input_options' => {},
-       'cases' => {}, 'formulas' => {'functions' => %w[ROUND IF], 'usage' => {}}, 'guide' => "## Shape\n"}
+       'cases' => {}, 'formulas' => {'functions' => %w[ROUND IF],
+                                     'usage' => {'ROUND' => 'ROUND(x, places): rounds half away from zero', 'IF' => 'IF(condition, then, else)'}},
+       'guide' => "## Shape\n"}
     end
 
     before { answers[[:get, '/describe']] = [200, catalogue] }
 
     it 'lists the step types and functions, without a key' do
       expect(rmt('describe', '--text', env: {})).to eq(0)
-      expect(out.string).to include('formula', 'ROUND, IF', 'rmt guide')
+      expect(out.string).to include('formula', 'ROUND(x, places): rounds half away from zero', 'IF(condition, then, else)', 'rmt guide')
     end
 
     it 'prints the workflow for rmt and then the service guide to writing a blueprint, without a key' do
