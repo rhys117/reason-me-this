@@ -6,6 +6,7 @@ from the rep's deals with `reason_me_this`.
 | Piece | What it shows |
 | --- | --- |
 | `app/models/rep.rb` | `reasons :statement` builds the facts from the rep's deals, cancellations and quarter targets |
+| Save this statement | `rep.statement!(year)` writes each quarter into `quarter_statements` and keeps a receipt (`rails g reason_me_this:receipts`) |
 | `Deal#to_fact`, `QuarterTarget#to_fact` | each record as the fact the `sales_commission` blueprint reads |
 | `RepsController#show` | the statement for a year, or the error in plain words |
 | `config/initializers/reason_me_this.rb` | the client, configured from the environment |
