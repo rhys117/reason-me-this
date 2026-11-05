@@ -11,7 +11,7 @@ module ReasonMeThis
         define_method(:"#{name}!") { |*args| reason!(name, args) }
       end
 
-      def saves(name, **columns) = savings[name] << columns
+      def saves(name, **) = savings[name] << Saving.of(**)
 
       def reasoned = @reasoned ||= {}
 
@@ -27,7 +27,7 @@ module ReasonMeThis
     def reason!(name, args)
       explained = reasoning(name, :explain, args)
       transactionally do
-        self.class.savings[name].each { |columns| columns.each { |column, path| public_send(:"#{column}=", explained.at(path)) } }
+        self.class.savings[name].each { |saving| saving.apply(self, explained) }
         save! if respond_to?(:save!)
       end
       explained
