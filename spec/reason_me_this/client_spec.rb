@@ -1,4 +1,4 @@
-RSpec.describe Reckoning::Client do
+RSpec.describe ReasonMeThis::Client do
   subject(:client) { described_class.new(connection:) }
 
   let(:connection) { FakeConnection.new(status, body) }
@@ -61,7 +61,7 @@ RSpec.describe Reckoning::Client do
       let(:body) { {'problems' => ['calculations is missing']} }
 
       it 'raises Rejected with the report' do
-        expect { client.push('bill', yaml: '') }.to raise_error(Reckoning::Client::Rejected) do |error|
+        expect { client.push('bill', yaml: '') }.to raise_error(ReasonMeThis::Rejected) do |error|
           expect(error.message).to eq('the definition was not accepted: calculations is missing')
           expect(error.report).to eq(problems: ['calculations is missing'])
         end
@@ -83,7 +83,7 @@ RSpec.describe Reckoning::Client do
       let(:body) { {'problems' => [], 'passed' => 1, 'failed' => 2, 'cases' => []} }
 
       it 'raises Rejected saying how many cases failed' do
-        expect { client.publish('bill') }.to raise_error(Reckoning::Client::Rejected, 'the definition was not accepted: 2 cases failed')
+        expect { client.publish('bill') }.to raise_error(ReasonMeThis::Rejected, 'the definition was not accepted: 2 cases failed')
       end
     end
   end
@@ -108,11 +108,11 @@ RSpec.describe Reckoning::Client do
 
   describe 'when the service refuses' do
     {
-      [401, {'error' => 'unauthorized'}] => [Reckoning::Client::Unauthorized, 'the service refused the API key'],
-      [404, {'error' => 'no definition named bill'}] => [Reckoning::Client::NotFound, 'no definition named bill'],
-      [422, {'error' => 'divided by zero in rate'}] => [Reckoning::Client::StepFailed, 'divided by zero in rate'],
-      [503, {'error' => 'the run took too long'}] => [Reckoning::Client::Timeout, 'the run took too long'],
-      [500, {}] => [Reckoning::Client::Error, 'the service answered HTTP 500']
+      [401, {'error' => 'unauthorized'}] => [ReasonMeThis::Unauthorized, 'the service refused the API key'],
+      [404, {'error' => 'no definition named bill'}] => [ReasonMeThis::NotFound, 'no definition named bill'],
+      [422, {'error' => 'divided by zero in rate'}] => [ReasonMeThis::StepFailed, 'divided by zero in rate'],
+      [503, {'error' => 'the run took too long'}] => [ReasonMeThis::Timeout, 'the run took too long'],
+      [500, {}] => [ReasonMeThis::Error, 'the service answered HTTP 500']
     }.each do |(code, answer), (error, message)|
       context "with HTTP #{code} #{answer}" do
         let(:status) { code }
@@ -129,17 +129,17 @@ RSpec.describe Reckoning::Client do
       let(:body) { {'problems' => ['hours is missing', 'rate must be a number']} }
 
       it 'raises InvalidFacts naming each problem' do
-        expect { client.run('bill', {}) }.to raise_error(Reckoning::Client::InvalidFacts) do |error|
+        expect { client.run('bill', {}) }.to raise_error(ReasonMeThis::InvalidFacts) do |error|
           expect(error.message).to eq('the facts have problems: hours is missing; rate must be a number')
           expect(error.problems).to eq(['hours is missing', 'rate must be a number'])
         end
       end
     end
 
-    it 'keeps every error under Reckoning::Client::Error' do
-      errors = %i[Unauthorized NotFound InvalidFacts StepFailed Timeout Unreachable].map { |name| described_class.const_get(name) }
+    it 'keeps every error under ReasonMeThis::Error' do
+      errors = %i[Unauthorized NotFound InvalidFacts StepFailed Timeout Unreachable].map { |name| ReasonMeThis.const_get(name) }
 
-      expect(errors).to all(be < Reckoning::Client::Error)
+      expect(errors).to all(be < ReasonMeThis::Error)
     end
   end
 end

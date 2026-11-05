@@ -16,7 +16,7 @@ RSpec.describe 'A rep statement' do
   end
 
   context 'when the service cannot be reached' do
-    let(:service) { Reckoning::Client::Connection.new('http://127.0.0.1:9', 'k') }
+    let(:service) { ReasonMeThis::Connection.new('http://127.0.0.1:9', 'k') }
 
     it 'says so in plain words' do
       get rep_path(rep, year: 2026)

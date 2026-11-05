@@ -1,6 +1,6 @@
-# reckoning-client
+# reason_me_this
 
-The Ruby SDK an app uses to call a hosted Reckoning service over HTTP. `examples/commissions` is a small
+The Ruby client an app uses to call Reason Me This (reason-me-this.com) over HTTP. `examples/commissions` is a small
 Rails app that shows it in use.
 
 ## Must follow
@@ -29,5 +29,5 @@ separately.
 - The service's HTTP contract is fixed: the client adapts to it, never the other way.
 - Numbers stay exact both ways: a `BigDecimal` fact goes out as a JSON number literal (`JSON::Fragment`),
   and numeric strings in answers come back as `BigDecimal`.
-- Unit specs use an injected fake connection. Only `spec/reckoning/client/connection_spec.rb` opens a real
+- Unit specs use an injected fake connection. Only `spec/reason_me_this/connection_spec.rb` opens a real
   socket.

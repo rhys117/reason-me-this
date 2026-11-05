@@ -1,4 +1,4 @@
-require 'reckoning/client'
+require 'reason_me_this'
 require_relative 'support/closed_port'
 require_relative 'support/fake_connection'
 
