@@ -3,6 +3,9 @@
 <p><%= link_to "All reps", root_path %></p>
 <h1><%= @rep.name %>: commission for <%= @year %></h1>
 
+<% if notice || alert %><p class="<%= alert ? 'problem' : 'notice' %>"><%= notice || alert %></p><% end %>
+<%= button_to "Save this statement", rep_statement_path(@rep, year: @year) %>
+
 <% if @problem %>
   <p class="problem"><%= @problem %></p>
 <% else %>

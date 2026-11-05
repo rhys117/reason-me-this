@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_124429) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_130747) do
   create_table "deals", force: :cascade do |t|
     t.integer "rep_id", null: false
     t.string "code", null: false
@@ -26,6 +26,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_124429) do
     t.index ["rep_id"], name: "index_deals_on_rep_id"
   end
 
+  create_table "quarter_statements", force: :cascade do |t|
+    t.integer "rep_id", null: false
+    t.date "start", null: false
+    t.decimal "credited", precision: 14, scale: 2
+    t.decimal "attainment", precision: 8, scale: 4
+    t.decimal "commission", precision: 14, scale: 2
+    t.decimal "spiffs", precision: 14, scale: 2
+    t.decimal "earned", precision: 14, scale: 2
+    t.decimal "payout", precision: 14, scale: 2
+    t.decimal "balance_after", precision: 14, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["rep_id", "start"], name: "index_quarter_statements_on_rep_id_and_start", unique: true
+    t.index ["rep_id"], name: "index_quarter_statements_on_rep_id"
+  end
+
   create_table "quarter_targets", force: :cascade do |t|
     t.integer "rep_id", null: false
     t.date "starts_on", null: false
@@ -38,6 +54,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_124429) do
     t.index ["rep_id"], name: "index_quarter_targets_on_rep_id"
   end
 
+  create_table "reason_me_this_receipts", force: :cascade do |t|
+    t.string "record_type", null: false
+    t.integer "record_id", null: false
+    t.string "reasoning", null: false
+    t.string "blueprint", null: false
+    t.string "version"
+    t.string "calculation"
+    t.json "facts", null: false
+    t.json "outputs", null: false
+    t.json "steps", null: false
+    t.datetime "created_at", null: false
+    t.index ["record_type", "record_id"], name: "index_reason_me_this_receipts_on_record"
+  end
+
   create_table "reps", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "created_at", null: false
@@ -45,5 +75,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_124429) do
   end
 
   add_foreign_key "deals", "reps"
+  add_foreign_key "quarter_statements", "reps"
   add_foreign_key "quarter_targets", "reps"
 end

@@ -1,0 +1,1504 @@
+{
+  "outputs": {
+    "by_quarter": [
+      {
+        "start": "2026-01-01",
+        "finish": "2026-03-31",
+        "quota": "60000",
+        "target_incentive": "10000",
+        "draw": "5000",
+        "credited": "48000",
+        "attainment": "0.8",
+        "commission": "3300",
+        "spiffs": "1000",
+        "earned": "4300",
+        "payout": "5000",
+        "balance_after": "700"
+      },
+      {
+        "start": "2026-04-01",
+        "finish": "2026-06-30",
+        "quota": "100000",
+        "target_incentive": "10000",
+        "draw": "5000",
+        "credited": "103000",
+        "attainment": "1.03",
+        "commission": "7950",
+        "spiffs": "1000",
+        "earned": "8950",
+        "payout": "8250",
+        "balance_after": "0"
+      },
+      {
+        "start": "2026-07-01",
+        "finish": "2026-09-30",
+        "quota": "120000",
+        "target_incentive": "12000",
+        "credited": "126000",
+        "attainment": "1.05",
+        "commission": "10080",
+        "spiffs": "1500",
+        "earned": "11580",
+        "payout": "11580",
+        "balance_after": "0"
+      },
+      {
+        "start": "2026-10-01",
+        "finish": "2026-12-31",
+        "quota": "150000",
+        "target_incentive": "12000",
+        "credited": "270000",
+        "attainment": "1.8",
+        "commission": "30000",
+        "spiffs": "1000",
+        "earned": "31000",
+        "payout": "31000",
+        "balance_after": "0"
+      }
+    ],
+    "total_earned": "55830",
+    "total_paid": "55830",
+    "closing_balance": "0"
+  },
+  "steps": [
+    {
+      "step": "credits",
+      "value": [
+        {
+          "id": "D1",
+          "closed": "2026-01-20",
+          "total_value": "72000",
+          "years": "2",
+          "discount": "0.1",
+          "kind": "new_logo",
+          "credit": "36000",
+          "spiff": "1000"
+        },
+        {
+          "id": "D2",
+          "closed": "2026-02-14",
+          "total_value": "30000",
+          "years": "1",
+          "discount": "0.25",
+          "kind": "expansion",
+          "share": "0.5",
+          "credit": "12000",
+          "spiff": "0"
+        },
+        {
+          "id": "D3",
+          "closed": "2026-04-10",
+          "total_value": "150000",
+          "years": "3",
+          "discount": "0.3",
+          "kind": "new_logo",
+          "credit": "25000",
+          "spiff": "1000"
+        },
+        {
+          "id": "D4",
+          "closed": "2026-05-20",
+          "total_value": "60000",
+          "years": "1",
+          "discount": "0.15",
+          "kind": "expansion",
+          "credit": "60000",
+          "spiff": "0"
+        },
+        {
+          "id": "D5",
+          "closed": "2026-06-30",
+          "total_value": "120000",
+          "years": "1",
+          "discount": "0.05",
+          "kind": "renewal",
+          "credit": "30000",
+          "spiff": "0"
+        },
+        {
+          "id": "D6",
+          "closed": "2026-07-08",
+          "total_value": "240000",
+          "years": "2",
+          "discount": "0.18",
+          "kind": "new_logo",
+          "share": "0.5",
+          "credit": "60000",
+          "spiff": "500"
+        },
+        {
+          "id": "D7",
+          "closed": "2026-08-25",
+          "total_value": "45000",
+          "years": "1",
+          "discount": "0.2",
+          "kind": "expansion",
+          "credit": "36000",
+          "spiff": "0"
+        },
+        {
+          "id": "D8",
+          "closed": "2026-09-15",
+          "total_value": "30000",
+          "years": "1",
+          "discount": "0",
+          "kind": "new_logo",
+          "credit": "30000",
+          "spiff": "1000"
+        },
+        {
+          "id": "D9",
+          "closed": "2026-10-30",
+          "total_value": "600000",
+          "years": "3",
+          "discount": "0.12",
+          "kind": "new_logo",
+          "credit": "200000",
+          "spiff": "1000"
+        },
+        {
+          "id": "D10",
+          "closed": "2026-11-18",
+          "total_value": "150000",
+          "years": "1",
+          "discount": "0.22",
+          "kind": "expansion",
+          "share": "0.5",
+          "credit": "60000",
+          "spiff": "0"
+        },
+        {
+          "id": "D11",
+          "closed": "2026-12-31",
+          "total_value": "320000",
+          "years": "1",
+          "discount": "0.4",
+          "kind": "renewal",
+          "credit": "40000",
+          "spiff": "0"
+        }
+      ],
+      "of": "deals",
+      "rows": [
+        [
+          {
+            "step": "first_year",
+            "value": "36000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "1",
+            "row": {
+              "less_than": "0.2",
+              "factor": "1"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            },
+            "row": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "36000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "1000",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "30000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "0.8",
+            "row": {
+              "less_than": "0.3",
+              "factor": "0.8"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            },
+            "row": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "12000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "0",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "50000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "0.5",
+            "row": {
+              "factor": "0.5"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            },
+            "row": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "25000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "1000",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "60000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "1",
+            "row": {
+              "less_than": "0.2",
+              "factor": "1"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            },
+            "row": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "60000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "0",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "120000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "1",
+            "row": {
+              "less_than": "0.2",
+              "factor": "1"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "renewal",
+              "factor": "0.25",
+              "spiff": "0"
+            },
+            "row": {
+              "kind": "renewal",
+              "factor": "0.25",
+              "spiff": "0"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "30000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "0",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "120000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "1",
+            "row": {
+              "less_than": "0.2",
+              "factor": "1"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            },
+            "row": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "60000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "500",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "45000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "0.8",
+            "row": {
+              "less_than": "0.3",
+              "factor": "0.8"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            },
+            "row": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "36000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "0",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "30000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "1",
+            "row": {
+              "less_than": "0.2",
+              "factor": "1"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            },
+            "row": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "30000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "1000",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "200000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "1",
+            "row": {
+              "less_than": "0.2",
+              "factor": "1"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            },
+            "row": {
+              "kind": "new_logo",
+              "factor": "1",
+              "spiff": "1000"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "200000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "1000",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "150000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "0.8",
+            "row": {
+              "less_than": "0.3",
+              "factor": "0.8"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            },
+            "row": {
+              "kind": "expansion",
+              "factor": "1",
+              "spiff": "0"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "60000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "0",
+            "formula": "deal_kind.spiff * share"
+          }
+        ],
+        [
+          {
+            "step": "first_year",
+            "value": "320000",
+            "formula": "total_value / years"
+          },
+          {
+            "step": "discount_factor",
+            "value": "0.5",
+            "row": {
+              "factor": "0.5"
+            }
+          },
+          {
+            "step": "deal_kind",
+            "value": {
+              "kind": "renewal",
+              "factor": "0.25",
+              "spiff": "0"
+            },
+            "row": {
+              "kind": "renewal",
+              "factor": "0.25",
+              "spiff": "0"
+            }
+          },
+          {
+            "step": "credit",
+            "value": "40000",
+            "formula": "first_year * share * discount_factor * deal_kind.factor"
+          },
+          {
+            "step": "spiff",
+            "value": "0",
+            "formula": "deal_kind.spiff * share"
+          }
+        ]
+      ]
+    },
+    {
+      "step": "clawbacks",
+      "value": [
+        {
+          "deal": "D2",
+          "on": "2026-05-01",
+          "amount": "12000"
+        },
+        {
+          "deal": "D3",
+          "on": "2026-09-01",
+          "amount": "0"
+        },
+        {
+          "deal": "D8",
+          "on": "2026-11-10",
+          "amount": "30000"
+        }
+      ],
+      "of": "cancellations",
+      "rows": [
+        [
+          {
+            "step": "cancelled",
+            "value": {
+              "id": "D2",
+              "closed": "2026-02-14",
+              "total_value": "30000",
+              "years": "1",
+              "discount": "0.25",
+              "kind": "expansion",
+              "share": "0.5",
+              "credit": "12000",
+              "spiff": "0"
+            },
+            "row": {
+              "id": "D2",
+              "closed": "2026-02-14",
+              "total_value": "30000",
+              "years": "1",
+              "discount": "0.25",
+              "kind": "expansion",
+              "share": "0.5",
+              "credit": "12000",
+              "spiff": "0"
+            }
+          },
+          {
+            "step": "amount",
+            "value": "12000",
+            "formula": "IF(on - cancelled.closed <= 90, cancelled.credit, 0)"
+          }
+        ],
+        [
+          {
+            "step": "cancelled",
+            "value": {
+              "id": "D3",
+              "closed": "2026-04-10",
+              "total_value": "150000",
+              "years": "3",
+              "discount": "0.3",
+              "kind": "new_logo",
+              "credit": "25000",
+              "spiff": "1000"
+            },
+            "row": {
+              "id": "D3",
+              "closed": "2026-04-10",
+              "total_value": "150000",
+              "years": "3",
+              "discount": "0.3",
+              "kind": "new_logo",
+              "credit": "25000",
+              "spiff": "1000"
+            }
+          },
+          {
+            "step": "amount",
+            "value": "0",
+            "formula": "IF(on - cancelled.closed <= 90, cancelled.credit, 0)"
+          }
+        ],
+        [
+          {
+            "step": "cancelled",
+            "value": {
+              "id": "D8",
+              "closed": "2026-09-15",
+              "total_value": "30000",
+              "years": "1",
+              "discount": "0",
+              "kind": "new_logo",
+              "credit": "30000",
+              "spiff": "1000"
+            },
+            "row": {
+              "id": "D8",
+              "closed": "2026-09-15",
+              "total_value": "30000",
+              "years": "1",
+              "discount": "0",
+              "kind": "new_logo",
+              "credit": "30000",
+              "spiff": "1000"
+            }
+          },
+          {
+            "step": "amount",
+            "value": "30000",
+            "formula": "IF(on - cancelled.closed <= 90, cancelled.credit, 0)"
+          }
+        ]
+      ]
+    },
+    {
+      "step": "by_quarter",
+      "value": [
+        {
+          "start": "2026-01-01",
+          "finish": "2026-03-31",
+          "quota": "60000",
+          "target_incentive": "10000",
+          "draw": "5000",
+          "credited": "48000",
+          "attainment": "0.8",
+          "commission": "3300",
+          "spiffs": "1000",
+          "earned": "4300",
+          "payout": "5000",
+          "balance_after": "700"
+        },
+        {
+          "start": "2026-04-01",
+          "finish": "2026-06-30",
+          "quota": "100000",
+          "target_incentive": "10000",
+          "draw": "5000",
+          "credited": "103000",
+          "attainment": "1.03",
+          "commission": "7950",
+          "spiffs": "1000",
+          "earned": "8950",
+          "payout": "8250",
+          "balance_after": "0"
+        },
+        {
+          "start": "2026-07-01",
+          "finish": "2026-09-30",
+          "quota": "120000",
+          "target_incentive": "12000",
+          "credited": "126000",
+          "attainment": "1.05",
+          "commission": "10080",
+          "spiffs": "1500",
+          "earned": "11580",
+          "payout": "11580",
+          "balance_after": "0"
+        },
+        {
+          "start": "2026-10-01",
+          "finish": "2026-12-31",
+          "quota": "150000",
+          "target_incentive": "12000",
+          "credited": "270000",
+          "attainment": "1.8",
+          "commission": "30000",
+          "spiffs": "1000",
+          "earned": "31000",
+          "payout": "31000",
+          "balance_after": "0"
+        }
+      ],
+      "of": "quarters",
+      "rows": [
+        [
+          {
+            "step": "terms",
+            "value": {
+              "from": "2026-01-01",
+              "plan": "first_half",
+              "cap_multiple": "2"
+            },
+            "row": {
+              "from": "2026-01-01",
+              "plan": "first_half",
+              "cap_multiple": "2"
+            }
+          },
+          {
+            "step": "closed",
+            "value": [
+              {
+                "id": "D1",
+                "closed": "2026-01-20",
+                "total_value": "72000",
+                "years": "2",
+                "discount": "0.1",
+                "kind": "new_logo",
+                "credit": "36000",
+                "spiff": "1000"
+              },
+              {
+                "id": "D2",
+                "closed": "2026-02-14",
+                "total_value": "30000",
+                "years": "1",
+                "discount": "0.25",
+                "kind": "expansion",
+                "share": "0.5",
+                "credit": "12000",
+                "spiff": "0"
+              }
+            ],
+            "formula": "FILTER(credits, c, c.closed >= start AND c.closed <= finish)"
+          },
+          {
+            "step": "clawed_back",
+            "value": "0",
+            "formula": "SUM(PLUCK(FILTER(clawbacks, c, c.on >= start AND c.on <= finish), amount))"
+          },
+          {
+            "step": "credited",
+            "value": "48000",
+            "formula": "SUM(PLUCK(closed, credit)) - clawed_back"
+          },
+          {
+            "step": "attainment",
+            "value": "0.8",
+            "formula": "credited / quota"
+          },
+          {
+            "step": "plan_tiers",
+            "value": [
+              {
+                "plan": "first_half",
+                "lower": "0",
+                "upper": "0.5",
+                "rate": "0.05"
+              },
+              {
+                "plan": "first_half",
+                "lower": "0.5",
+                "upper": "1",
+                "rate": "0.1"
+              },
+              {
+                "plan": "first_half",
+                "lower": "1",
+                "upper": "1.5",
+                "rate": "0.15"
+              },
+              {
+                "plan": "first_half",
+                "lower": "1.5",
+                "upper": "99",
+                "rate": "0.2"
+              }
+            ],
+            "formula": "FILTER(tiers, t, t.plan = terms.plan)"
+          },
+          {
+            "step": "slices",
+            "value": [
+              {
+                "amount": "1500"
+              },
+              {
+                "amount": "1800"
+              },
+              {
+                "amount": "0"
+              },
+              {
+                "amount": "0"
+              }
+            ],
+            "of": "plan_tiers",
+            "rows": [
+              [
+                {
+                  "step": "amount",
+                  "value": "1500",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "1800",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "0",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "0",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ]
+            ]
+          },
+          {
+            "step": "tiered",
+            "value": "3300",
+            "of": "slices"
+          },
+          {
+            "step": "commission",
+            "value": "3300",
+            "formula": "MIN(tiered, terms.cap_multiple * target_incentive)"
+          },
+          {
+            "step": "spiffs",
+            "value": "1000",
+            "formula": "SUM(PLUCK(closed, spiff))"
+          },
+          {
+            "step": "earned",
+            "value": "4300",
+            "formula": "commission + spiffs"
+          },
+          {
+            "step": "recoverable",
+            "value": "4300",
+            "formula": "earned - balance"
+          },
+          {
+            "step": "payout",
+            "value": "5000",
+            "formula": "ROUND(MAX(draw, recoverable), 2)"
+          },
+          {
+            "step": "balance_after",
+            "value": "700",
+            "formula": "payout - recoverable"
+          }
+        ],
+        [
+          {
+            "step": "terms",
+            "value": {
+              "from": "2026-01-01",
+              "plan": "first_half",
+              "cap_multiple": "2"
+            },
+            "row": {
+              "from": "2026-01-01",
+              "plan": "first_half",
+              "cap_multiple": "2"
+            }
+          },
+          {
+            "step": "closed",
+            "value": [
+              {
+                "id": "D3",
+                "closed": "2026-04-10",
+                "total_value": "150000",
+                "years": "3",
+                "discount": "0.3",
+                "kind": "new_logo",
+                "credit": "25000",
+                "spiff": "1000"
+              },
+              {
+                "id": "D4",
+                "closed": "2026-05-20",
+                "total_value": "60000",
+                "years": "1",
+                "discount": "0.15",
+                "kind": "expansion",
+                "credit": "60000",
+                "spiff": "0"
+              },
+              {
+                "id": "D5",
+                "closed": "2026-06-30",
+                "total_value": "120000",
+                "years": "1",
+                "discount": "0.05",
+                "kind": "renewal",
+                "credit": "30000",
+                "spiff": "0"
+              }
+            ],
+            "formula": "FILTER(credits, c, c.closed >= start AND c.closed <= finish)"
+          },
+          {
+            "step": "clawed_back",
+            "value": "12000",
+            "formula": "SUM(PLUCK(FILTER(clawbacks, c, c.on >= start AND c.on <= finish), amount))"
+          },
+          {
+            "step": "credited",
+            "value": "103000",
+            "formula": "SUM(PLUCK(closed, credit)) - clawed_back"
+          },
+          {
+            "step": "attainment",
+            "value": "1.03",
+            "formula": "credited / quota"
+          },
+          {
+            "step": "plan_tiers",
+            "value": [
+              {
+                "plan": "first_half",
+                "lower": "0",
+                "upper": "0.5",
+                "rate": "0.05"
+              },
+              {
+                "plan": "first_half",
+                "lower": "0.5",
+                "upper": "1",
+                "rate": "0.1"
+              },
+              {
+                "plan": "first_half",
+                "lower": "1",
+                "upper": "1.5",
+                "rate": "0.15"
+              },
+              {
+                "plan": "first_half",
+                "lower": "1.5",
+                "upper": "99",
+                "rate": "0.2"
+              }
+            ],
+            "formula": "FILTER(tiers, t, t.plan = terms.plan)"
+          },
+          {
+            "step": "slices",
+            "value": [
+              {
+                "amount": "2500"
+              },
+              {
+                "amount": "5000"
+              },
+              {
+                "amount": "450"
+              },
+              {
+                "amount": "0"
+              }
+            ],
+            "of": "plan_tiers",
+            "rows": [
+              [
+                {
+                  "step": "amount",
+                  "value": "2500",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "5000",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "450",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "0",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ]
+            ]
+          },
+          {
+            "step": "tiered",
+            "value": "7950",
+            "of": "slices"
+          },
+          {
+            "step": "commission",
+            "value": "7950",
+            "formula": "MIN(tiered, terms.cap_multiple * target_incentive)"
+          },
+          {
+            "step": "spiffs",
+            "value": "1000",
+            "formula": "SUM(PLUCK(closed, spiff))"
+          },
+          {
+            "step": "earned",
+            "value": "8950",
+            "formula": "commission + spiffs"
+          },
+          {
+            "step": "recoverable",
+            "value": "8250",
+            "formula": "earned - balance"
+          },
+          {
+            "step": "payout",
+            "value": "8250",
+            "formula": "ROUND(MAX(draw, recoverable), 2)"
+          },
+          {
+            "step": "balance_after",
+            "value": "0",
+            "formula": "payout - recoverable"
+          }
+        ],
+        [
+          {
+            "step": "terms",
+            "value": {
+              "from": "2026-07-01",
+              "plan": "second_half",
+              "cap_multiple": "2.5"
+            },
+            "row": {
+              "from": "2026-07-01",
+              "plan": "second_half",
+              "cap_multiple": "2.5"
+            }
+          },
+          {
+            "step": "closed",
+            "value": [
+              {
+                "id": "D6",
+                "closed": "2026-07-08",
+                "total_value": "240000",
+                "years": "2",
+                "discount": "0.18",
+                "kind": "new_logo",
+                "share": "0.5",
+                "credit": "60000",
+                "spiff": "500"
+              },
+              {
+                "id": "D7",
+                "closed": "2026-08-25",
+                "total_value": "45000",
+                "years": "1",
+                "discount": "0.2",
+                "kind": "expansion",
+                "credit": "36000",
+                "spiff": "0"
+              },
+              {
+                "id": "D8",
+                "closed": "2026-09-15",
+                "total_value": "30000",
+                "years": "1",
+                "discount": "0",
+                "kind": "new_logo",
+                "credit": "30000",
+                "spiff": "1000"
+              }
+            ],
+            "formula": "FILTER(credits, c, c.closed >= start AND c.closed <= finish)"
+          },
+          {
+            "step": "clawed_back",
+            "value": "0",
+            "formula": "SUM(PLUCK(FILTER(clawbacks, c, c.on >= start AND c.on <= finish), amount))"
+          },
+          {
+            "step": "credited",
+            "value": "126000",
+            "formula": "SUM(PLUCK(closed, credit)) - clawed_back"
+          },
+          {
+            "step": "attainment",
+            "value": "1.05",
+            "formula": "credited / quota"
+          },
+          {
+            "step": "plan_tiers",
+            "value": [
+              {
+                "plan": "second_half",
+                "lower": "0",
+                "upper": "0.5",
+                "rate": "0.05"
+              },
+              {
+                "plan": "second_half",
+                "lower": "0.5",
+                "upper": "1",
+                "rate": "0.1"
+              },
+              {
+                "plan": "second_half",
+                "lower": "1",
+                "upper": "1.5",
+                "rate": "0.18"
+              },
+              {
+                "plan": "second_half",
+                "lower": "1.5",
+                "upper": "99",
+                "rate": "0.25"
+              }
+            ],
+            "formula": "FILTER(tiers, t, t.plan = terms.plan)"
+          },
+          {
+            "step": "slices",
+            "value": [
+              {
+                "amount": "3000"
+              },
+              {
+                "amount": "6000"
+              },
+              {
+                "amount": "1080"
+              },
+              {
+                "amount": "0"
+              }
+            ],
+            "of": "plan_tiers",
+            "rows": [
+              [
+                {
+                  "step": "amount",
+                  "value": "3000",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "6000",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "1080",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "0",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ]
+            ]
+          },
+          {
+            "step": "tiered",
+            "value": "10080",
+            "of": "slices"
+          },
+          {
+            "step": "commission",
+            "value": "10080",
+            "formula": "MIN(tiered, terms.cap_multiple * target_incentive)"
+          },
+          {
+            "step": "spiffs",
+            "value": "1500",
+            "formula": "SUM(PLUCK(closed, spiff))"
+          },
+          {
+            "step": "earned",
+            "value": "11580",
+            "formula": "commission + spiffs"
+          },
+          {
+            "step": "recoverable",
+            "value": "11580",
+            "formula": "earned - balance"
+          },
+          {
+            "step": "payout",
+            "value": "11580",
+            "formula": "ROUND(MAX(draw, recoverable), 2)"
+          },
+          {
+            "step": "balance_after",
+            "value": "0",
+            "formula": "payout - recoverable"
+          }
+        ],
+        [
+          {
+            "step": "terms",
+            "value": {
+              "from": "2026-07-01",
+              "plan": "second_half",
+              "cap_multiple": "2.5"
+            },
+            "row": {
+              "from": "2026-07-01",
+              "plan": "second_half",
+              "cap_multiple": "2.5"
+            }
+          },
+          {
+            "step": "closed",
+            "value": [
+              {
+                "id": "D9",
+                "closed": "2026-10-30",
+                "total_value": "600000",
+                "years": "3",
+                "discount": "0.12",
+                "kind": "new_logo",
+                "credit": "200000",
+                "spiff": "1000"
+              },
+              {
+                "id": "D10",
+                "closed": "2026-11-18",
+                "total_value": "150000",
+                "years": "1",
+                "discount": "0.22",
+                "kind": "expansion",
+                "share": "0.5",
+                "credit": "60000",
+                "spiff": "0"
+              },
+              {
+                "id": "D11",
+                "closed": "2026-12-31",
+                "total_value": "320000",
+                "years": "1",
+                "discount": "0.4",
+                "kind": "renewal",
+                "credit": "40000",
+                "spiff": "0"
+              }
+            ],
+            "formula": "FILTER(credits, c, c.closed >= start AND c.closed <= finish)"
+          },
+          {
+            "step": "clawed_back",
+            "value": "30000",
+            "formula": "SUM(PLUCK(FILTER(clawbacks, c, c.on >= start AND c.on <= finish), amount))"
+          },
+          {
+            "step": "credited",
+            "value": "270000",
+            "formula": "SUM(PLUCK(closed, credit)) - clawed_back"
+          },
+          {
+            "step": "attainment",
+            "value": "1.8",
+            "formula": "credited / quota"
+          },
+          {
+            "step": "plan_tiers",
+            "value": [
+              {
+                "plan": "second_half",
+                "lower": "0",
+                "upper": "0.5",
+                "rate": "0.05"
+              },
+              {
+                "plan": "second_half",
+                "lower": "0.5",
+                "upper": "1",
+                "rate": "0.1"
+              },
+              {
+                "plan": "second_half",
+                "lower": "1",
+                "upper": "1.5",
+                "rate": "0.18"
+              },
+              {
+                "plan": "second_half",
+                "lower": "1.5",
+                "upper": "99",
+                "rate": "0.25"
+              }
+            ],
+            "formula": "FILTER(tiers, t, t.plan = terms.plan)"
+          },
+          {
+            "step": "slices",
+            "value": [
+              {
+                "amount": "3750"
+              },
+              {
+                "amount": "7500"
+              },
+              {
+                "amount": "13500"
+              },
+              {
+                "amount": "11250"
+              }
+            ],
+            "of": "plan_tiers",
+            "rows": [
+              [
+                {
+                  "step": "amount",
+                  "value": "3750",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "7500",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "13500",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ],
+              [
+                {
+                  "step": "amount",
+                  "value": "11250",
+                  "formula": "MAX(0, MIN(attainment, upper) - lower) * quota * rate"
+                }
+              ]
+            ]
+          },
+          {
+            "step": "tiered",
+            "value": "36000",
+            "of": "slices"
+          },
+          {
+            "step": "commission",
+            "value": "30000",
+            "formula": "MIN(tiered, terms.cap_multiple * target_incentive)"
+          },
+          {
+            "step": "spiffs",
+            "value": "1000",
+            "formula": "SUM(PLUCK(closed, spiff))"
+          },
+          {
+            "step": "earned",
+            "value": "31000",
+            "formula": "commission + spiffs"
+          },
+          {
+            "step": "recoverable",
+            "value": "31000",
+            "formula": "earned - balance"
+          },
+          {
+            "step": "payout",
+            "value": "31000",
+            "formula": "ROUND(MAX(draw, recoverable), 2)"
+          },
+          {
+            "step": "balance_after",
+            "value": "0",
+            "formula": "payout - recoverable"
+          }
+        ]
+      ]
+    },
+    {
+      "step": "total_earned",
+      "value": "55830",
+      "of": "by_quarter"
+    },
+    {
+      "step": "total_paid",
+      "value": "55830",
+      "of": "by_quarter"
+    },
+    {
+      "step": "closing_balance",
+      "value": "0",
+      "formula": "REDUCE(by_quarter, owed, q, q.balance_after, opening_balance)"
+    }
+  ],
+  "version": 1
+}

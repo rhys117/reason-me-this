@@ -5,6 +5,8 @@ require 'reason_me_this/errors'
 require 'reason_me_this/explanation'
 require 'reason_me_this/connection'
 require 'reason_me_this/configuration'
+require 'reason_me_this/saving'
+require 'reason_me_this/recipe'
 require 'reason_me_this/model'
 require 'forwardable'
 
@@ -33,7 +35,7 @@ module ReasonMeThis
       name, pinned = name.to_s.split('@', 2)
       version ||= pinned&.match?(/\A\d+\z/) ? Integer(pinned) : pinned
       answer = request(:post, at(name, :run), {facts:, calculation:, version:, trace: (true if trace)}.compact)
-      trace ? Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps]) : Answer.new(answer)
+      trace ? Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps], version: answer[:version]) : Answer.new(answer)
     end
 
     def explain(name, facts, calculation: nil, version: nil) = run(name, facts, calculation:, version:, trace: true)

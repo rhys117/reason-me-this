@@ -124,23 +124,77 @@ end
 
 ## In a model
 
-`ReasonMeThis::Model` works in any class, ActiveRecord or not.
+`ReasonMeThis::Model` works in any class, ActiveRecord or not. Each `reasons` block is one recipe: how to
+build the facts, and, for `!`, what to save and what to run after.
 
 ```ruby
-class Rep < ApplicationRecord
+class Round < ApplicationRecord
   include ReasonMeThis::Model
 
-  reasons :statement, with: "sales_commission@3", calculation: :year do |year|
-    {deals: deals.closed_in(year).map(&:to_fact), quarters: quarter_targets.in(year).map(&:to_fact)}
+  belongs_to :golfer
+  has_many :hole_scores
+
+  reasons :result, with: "golf_whs_golfer" do
+    facts { {record: golfer.rounds.scored.last(20).map(&:to_fact), holes: holes.map(&:to_fact), played: played_on} }
+
+    saves differential: "gross_differential", daily_handicap: "card.daily_handicap"
+    saves into: :hole_scores, from: "card.scored", by: :hole
+    saves on: :golfer, handicap_index: "new_ga_handicap"
+    after { |explained| golfer.handicap_changes.create!(to: explained.at("new_ga_handicap")) }
+    keeps_receipts
   end
 end
 
-rep.statement(2026)               # => an answer, remembered on this rep for these arguments
-rep.statement(2026).total_paid
-rep.statement_explained(2026)     # the same run, explained
+round.result             # run and read; saves nothing, remembered on this round
+round.result_explained   # the same, with every step
+round.result!            # run with every step, then save, in one transaction
 ```
 
-The block runs on the instance, takes the method's arguments, and returns the facts.
+`facts` runs on the record and takes the method's arguments: `facts { |year| ... }` makes `rep.statement(2026)`.
+
+### What `!` saves
+
+| Declaration | Writes |
+| --- | --- |
+| `saves column: "path"` | the value at `path` into a column of this record |
+| `saves on: :golfer, column: "path"` | into a column of an associated record, and saves it |
+| `saves into: :hole_scores, from: "path", by: :hole` | each row of the list at `path` into the association, matched on `hole`, so a second run updates rather than duplicates. Columns the child has are filled from the row's fields of the same name; give `column: :field` pairs to choose |
+
+A path is an output's name, or the steps to a value through chained calculations: `card.daily_handicap`
+is the `daily_handicap` step inside the `card` run, and `card.scored.points` is `points` in every row of
+`card.scored`. `explained.at(path)` reads the same paths.
+
+Everything happens in one transaction with the record's own `save!`: a refusal from the service, an
+invalid record or a hook that raises leaves nothing written.
+
+### Hooks
+
+`after { |explained| ... }` runs on the record after the saves, inside the transaction. To store what your
+app needs from every reasoning, in tables of your own, add a hook to the configuration:
+
+```ruby
+ReasonMeThis.configure do |config|
+  config.after_reasoning do |record, name, explained|
+    CalculationLog.create!(subject: record, reasoning: name, version: explained.version, stableford: explained.at("stableford"))
+  end
+end
+```
+
+### Receipts
+
+`keeps_receipts` writes a `ReasonMeThis::Receipt` for every `!`: the reasoning, the blueprint and the
+version that ran, the calculation, and the facts, outputs and steps as the service showed them, so a
+result can be explained long after the rules change. Add the table once:
+
+```sh
+bin/rails generate reason_me_this:receipts
+bin/rails db:migrate
+```
+
+```ruby
+round.reason_me_this_receipts.last.version   # => "3"
+round.reason_me_this_receipts.last.steps     # the whole working, as it was
+```
 
 ## More than one service
 

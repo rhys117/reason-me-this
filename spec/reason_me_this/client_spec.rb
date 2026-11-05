@@ -29,7 +29,7 @@ RSpec.describe ReasonMeThis::Client do
   end
 
   describe '#explain' do
-    let(:body) { {'outputs' => {'total' => '2.3'}, 'steps' => [{'step' => 'total', 'value' => '2.3'}]} }
+    let(:body) { {'outputs' => {'total' => '2.3'}, 'steps' => [{'step' => 'total', 'value' => '2.3'}], 'version' => 3} }
 
     it 'runs with a trace and answers the outputs with the steps that made them' do
       explained = client.explain('bill', {hours: 2}, calculation: :invoice)
@@ -37,6 +37,10 @@ RSpec.describe ReasonMeThis::Client do
       expect(explained.outputs.total).to eq(BigDecimal('2.3'))
       expect(explained.steps).to eq([{step: 'total', value: BigDecimal('2.3')}])
       expect(connection.requests.last.last).to eq(facts: {hours: 2}, calculation: :invoice, trace: true)
+    end
+
+    it 'says which version ran' do
+      expect(client.explain('bill', {hours: 2}).version).to eq(3)
     end
   end
 
