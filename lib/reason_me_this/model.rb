@@ -13,6 +13,10 @@ module ReasonMeThis
 
       def saves(name, **) = savings[name] << Saving.of(**)
 
+      def after_reasoning(name, &hook) = hooks[name] << hook
+
+      def hooks = @hooks ||= Hash.new { |all, name| all[name] = [] }
+
       def reasoned = @reasoned ||= {}
 
       def savings = @savings ||= Hash.new { |all, name| all[name] = [] }
@@ -29,6 +33,8 @@ module ReasonMeThis
       transactionally do
         self.class.savings[name].each { |saving| saving.apply(self, explained) }
         save! if respond_to?(:save!)
+        self.class.hooks[name].each { |hook| instance_exec(explained, &hook) }
+        ReasonMeThis.configuration.hooks.each { |hook| hook.call(self, name, explained) }
       end
       explained
     end
