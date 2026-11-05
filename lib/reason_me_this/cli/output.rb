@@ -89,8 +89,9 @@ module ReasonMeThis
 
         def describe(answer)
           types = answer[:steps].map { |name, type| "  #{name.to_s.ljust(10)} #{type[:purpose]}" }
-          [bold('Step types'), *types, '', bold('Formula functions'), "  #{answer[:formulas][:functions].join(', ')}", '',
-           'Run rmt describe --json for examples of each, or rmt guide for the whole guide.'].join("\n")
+          functions = answer[:formulas][:usage].map { |_name, usage| "  #{usage}" }
+          [bold('Step types'), *types, '', bold('Formula functions'), *functions, '',
+           'Run rmt describe --json for an example of each, with what it gives, or rmt guide for the whole guide.'].join("\n")
         end
 
         def fields(values, depth)
