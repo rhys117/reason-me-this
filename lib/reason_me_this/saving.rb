@@ -6,11 +6,18 @@ module ReasonMeThis
       return rows(record.public_send(into), Array(explained.at(from))) if into
 
       target = on ? record.public_send(on) : record
-      columns.each { |column, path| target.public_send(:"#{column}=", explained.at(path)) }
+      columns.each { |column, source| target.public_send(:"#{column}=", stored(target, column, value(source, explained))) }
       target.save! if on
     end
 
     private
+
+    def value(source, explained) = source.respond_to?(:call) ? source.call(explained) : explained.at(source)
+
+    def stored(target, column, value)
+      json = target.respond_to?(:type_for_attribute) && target.type_for_attribute(column.to_s).type == :json
+      json ? Values.text(value) : value
+    end
 
     def rows(association, found)
       found.each do |row|

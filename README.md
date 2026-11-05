@@ -160,9 +160,29 @@ round.result!            # run with every step, then save, in one transaction
 | `saves on: :golfer, column: "path"` | into a column of an associated record, and saves it |
 | `saves into: :hole_scores, from: "path", by: :hole` | each row of the list at `path` into the association, matched on `hole`, so a second run updates rather than duplicates. Columns the child has are filled from the row's fields of the same name; give `column: :field` pairs to choose |
 
-A path is an output's name, or the steps to a value through chained calculations: `card.daily_handicap`
-is the `daily_handicap` step inside the `card` run, and `card.scored.points` is `points` in every row of
-`card.scored`. `explained.at(path)` reads the same paths.
+### Picking values
+
+Each `saves column: source` takes its value from a path, or from a lambda for anything a path cannot say:
+
+| Source | Gives |
+| --- | --- |
+| `"total_paid"` | an output |
+| `"card.daily_handicap"` | a step inside a chained calculation |
+| `"by_quarter"` | a whole list, for a JSON column |
+| `"by_quarter.payout"` | one field from every row, as a list |
+| `->(explained) { explained.at("by_quarter").last[:payout] }` | anything worked out from the explanation, such as one row |
+
+```ruby
+reasons :statement, with: "sales_commission@3", calculation: :year do
+  facts { |year| {...} }
+  saves total_paid: "total_paid", quarters: "by_quarter", payouts: "by_quarter.payout"
+  saves q4_payout: ->(explained) { explained.at("by_quarter").last[:payout] }
+end
+```
+
+A decimal or integer column gets the exact number. A JSON column gets values written as the service
+writes them (`"5000"`, `"0.8"`, `"2026-01-01"`), so nothing is lost to floats. `explained.at(path)` reads
+the same paths, and an `after` hook can save anything else: `after { |explained| update!(...) }`.
 
 Everything happens in one transaction with the record's own `save!`: a refusal from the service, an
 invalid record or a hook that raises leaves nothing written.

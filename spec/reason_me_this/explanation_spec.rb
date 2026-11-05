@@ -26,6 +26,21 @@ RSpec.describe ReasonMeThis::Explanation do
     expect(explained.at('card.scored.points')).to eq([2, 3])
   end
 
+  it 'reads fields within a value when the trace has no steps for them' do
+    plain = described_class.new(outputs: ReasonMeThis::Answer.new({}),
+                                steps: ReasonMeThis::Values.read([{'step' => 'by_quarter', 'value' => [{'payout' => '5000'}, {'payout' => '8250'}]}]))
+
+    expect(plain.at('by_quarter.payout')).to eq([5000, 8250])
+  end
+
+  it "reads one field of every row in a real run's list output" do
+    traced = JSON.parse(File.read(File.expand_path('../../examples/commissions/spec/fixtures/full_year_trace.json', __dir__)))
+    real = described_class.new(outputs: ReasonMeThis::Answer.new(traced['outputs']), steps: ReasonMeThis::Values.read(traced['steps']))
+
+    expect(real.at('by_quarter.payout')).to eq([5000, 8250, 11_580, 31_000])
+    expect(real.at('total_paid')).to eq(55_830)
+  end
+
   it 'says which part of a path it cannot find' do
     expect { explained.at('card.nope') }.to raise_error(ReasonMeThis::Error, 'no step card.nope in the trace')
   end

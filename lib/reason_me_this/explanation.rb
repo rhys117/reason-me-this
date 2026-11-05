@@ -16,8 +16,17 @@ module ReasonMeThis
       rest = names.drop(1)
       return step[:value] if rest.empty?
       return step[:rows].map { |row| found(row, rest, &missing) } if step[:rows]
+      return found(step[:steps], rest, &missing) if step[:steps]
 
-      found(Array(step[:steps]), rest, &missing)
+      within(step[:value], rest, &missing)
+    end
+
+    def within(value, names, &missing)
+      return value if names.empty?
+      return value.map { |row| within(row, names, &missing) } if value.is_a?(Array)
+      return missing.call unless value.is_a?(Hash) && value.key?(names.first.to_sym)
+
+      within(value[names.first.to_sym], names.drop(1), &missing)
     end
   end
 end

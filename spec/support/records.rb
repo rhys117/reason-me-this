@@ -3,7 +3,13 @@ require 'active_record'
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 ActiveRecord::Migration.verbose = false
 ActiveRecord::Schema.define do
-  create_table(:golfers) { |table| table.decimal :handicap_index }
+  create_table :golfers do |table|
+    table.decimal :handicap_index
+    table.json :holes
+    table.json :points
+    table.integer :best_hole
+    table.integer :worst_points
+  end
   create_table :rounds do |table|
     table.references :golfer
     table.decimal :differential
