@@ -1,5 +1,7 @@
 module ReasonMeThis
-  Explanation = Data.define(:outputs, :steps) do
+  Explanation = Data.define(:outputs, :steps, :version) do
+    def initialize(outputs:, steps:, version: nil) = super
+
     def at(path)
       names = path.to_s.split('.')
       return outputs[names.first] if names.one? && outputs.to_h.key?(names.first.to_sym)
