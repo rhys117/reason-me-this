@@ -11,6 +11,25 @@ It only speaks HTTP: it needs nothing beyond Ruby's standard library and does no
 gem "reason_me_this"
 ```
 
+## The rmt CLI
+
+The gem installs `rmt`, which builds, proves, publishes and runs blueprints on the service. It answers in
+JSON when its output is not a terminal, so an agent can loop on it, and in text at a terminal.
+
+```sh
+export RMT_API_KEY=...                       # from https://reason-me-this.com/app/api_keys
+rmt guide                                    # how to build a blueprint
+rmt check bill.yml                           # exit 2 while it has problems
+rmt test bill.yml cases.yml                  # exit 3 while a case fails
+rmt push bill bill.yml cases.yml && rmt publish bill
+echo '{"plan": "flat_rate"}' | rmt run bill --trace
+rmt run electricity_bill --facts facts.json  # a shipped blueprint, by name
+```
+
+`check`, `test` and `run` on a file send its text to the service and save nothing. Exit codes: 0 success,
+1 a run failed, 2 problems, 3 a case failed, 64 usage, 69 the service could not be reached, 77 the key was
+refused. `rmt help` lists every command. `RMT_API_URL` points it at another service.
+
 ## Configure
 
 ```ruby

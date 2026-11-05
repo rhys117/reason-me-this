@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require 'reason_me_this/cli'
+
+exit ReasonMeThis::CLI.call(ARGV)
