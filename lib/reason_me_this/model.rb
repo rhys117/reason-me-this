@@ -7,7 +7,7 @@ module ReasonMeThis
         reasoned[name] = Recipe.build(with:, calculation:, &)
         keep_receipts if reasoned[name].receipts
         {name => :run, "#{name}_explained": :explain}.each do |method, call|
-          define_method(method) { |*args| reasonings[[method, args]] ||= reasoning(name, call, facts_for(name, args)) }
+          define_method(method) { |*args| reasonings[[method, args]] ||= reasoning(self.class.reasoned.fetch(name), call, args) }
         end
         define_method(:"#{name}!") { |*args| reason!(name, args) }
       end
@@ -28,8 +28,8 @@ module ReasonMeThis
 
     def reason!(name, args)
       recipe = self.class.reasoned.fetch(name)
-      facts = facts_for(name, args)
-      explained = reasoning(name, :explain, facts)
+      facts = instance_exec(*args, &recipe.facts)
+      explained = reason_me_this_client.explain(recipe.blueprint, facts, calculation: recipe.calculation)
       transactionally do
         recipe.savings.each { |saving| saving.apply(self, explained) }
         save! if respond_to?(:save!)
@@ -40,11 +40,8 @@ module ReasonMeThis
       explained
     end
 
-    def facts_for(name, args) = instance_exec(*args, &self.class.reasoned.fetch(name).facts)
-
-    def reasoning(name, call, facts)
-      recipe = self.class.reasoned.fetch(name)
-      reason_me_this_client.public_send(call, recipe.blueprint, facts, calculation: recipe.calculation)
+    def reasoning(recipe, call, args)
+      reason_me_this_client.public_send(call, recipe.blueprint, instance_exec(*args, &recipe.facts), calculation: recipe.calculation)
     end
 
     def keep_receipt(recipe, name, facts, explained)
