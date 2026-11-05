@@ -31,6 +31,16 @@ module ReasonMeThis
       end
     end
 
+    def text(value)
+      deep(value) do |leaf|
+        case leaf
+        when BigDecimal then leaf.frac.zero? ? leaf.to_i.to_s : leaf.to_s('F')
+        when Date, Time then leaf.iso8601
+        else leaf
+        end
+      end
+    end
+
     def date(text)
       Date.iso8601(text)
     rescue Date::Error
