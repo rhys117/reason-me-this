@@ -3,23 +3,15 @@ module ReasonMeThis
     def self.included(base) = base.extend(ClassMethods)
 
     module ClassMethods
-      def reasons(name, with:, calculation: nil, &facts)
-        reasoned[name] = {with:, calculation:, facts:}
+      def reasons(name, with:, calculation: nil, &)
+        reasoned[name] = Recipe.new(with:, calculation:, &)
         {name => :run, "#{name}_explained": :explain}.each do |method, call|
           define_method(method) { |*args| reasonings[[method, args]] ||= reasoning(name, call, args) }
         end
         define_method(:"#{name}!") { |*args| reason!(name, args) }
       end
 
-      def saves(name, **) = savings[name] << Saving.of(**)
-
-      def after_reasoning(name, &hook) = hooks[name] << hook
-
-      def hooks = @hooks ||= Hash.new { |all, name| all[name] = [] }
-
-      def reasoned = @reasoned ||= {}
-
-      def savings = @savings ||= Hash.new { |all, name| all[name] = [] }
+      def reasoned = @reasoned ||= superclass.respond_to?(:reasoned) ? superclass.reasoned.dup : {}
     end
 
     def reason_me_this_client = ReasonMeThis.default
@@ -29,19 +21,20 @@ module ReasonMeThis
     def reasonings = @reasonings ||= {}
 
     def reason!(name, args)
+      recipe = self.class.reasoned.fetch(name)
       explained = reasoning(name, :explain, args)
       transactionally do
-        self.class.savings[name].each { |saving| saving.apply(self, explained) }
+        recipe.savings.each { |saving| saving.apply(self, explained) }
         save! if respond_to?(:save!)
-        self.class.hooks[name].each { |hook| instance_exec(explained, &hook) }
+        recipe.hooks.each { |hook| instance_exec(explained, &hook) }
         ReasonMeThis.configuration.hooks.each { |hook| hook.call(self, name, explained) }
       end
       explained
     end
 
     def reasoning(name, call, args)
-      how = self.class.reasoned.fetch(name)
-      reason_me_this_client.public_send(call, how[:with], instance_exec(*args, &how[:facts]), calculation: how[:calculation])
+      recipe = self.class.reasoned.fetch(name)
+      reason_me_this_client.public_send(call, recipe.with, instance_exec(*args, &recipe.facts), calculation: recipe.calculation)
     end
 
     def transactionally(&) = self.class.respond_to?(:transaction) ? self.class.transaction(&) : yield

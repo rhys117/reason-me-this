@@ -8,8 +8,8 @@ RSpec.describe ReasonMeThis::Model do
 
       def initialize(deals) = @deals = deals
 
-      reasons :statement, with: 'sales_commission@3', calculation: :year do |year|
-        {deals: deals.select { |deal| deal[:closed].year == year }}
+      reasons :statement, with: 'sales_commission@3', calculation: :year do
+        facts { |year| {deals: deals.select { |deal| deal[:closed].year == year }} }
       end
     end
   end

@@ -6,6 +6,7 @@ require 'reason_me_this/explanation'
 require 'reason_me_this/connection'
 require 'reason_me_this/configuration'
 require 'reason_me_this/saving'
+require 'reason_me_this/recipe'
 require 'reason_me_this/model'
 require 'forwardable'
 

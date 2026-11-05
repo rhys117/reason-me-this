@@ -1,6 +1,6 @@
 require_relative '../support/records'
 
-RSpec.describe ReasonMeThis::Model, '.after_reasoning' do
+RSpec.describe ReasonMeThis::Model, '#after_reasoning' do
   include Records
 
   let(:changes) { [] }
@@ -12,16 +12,19 @@ RSpec.describe ReasonMeThis::Model, '.after_reasoning' do
 
       include ReasonMeThis::Model
 
-      reasons(:result, with: 'golf_whs_golfer') { {played: '2026-04-11'} }
-      saves :result, differential: 'gross_differential'
-      after_reasoning(:result) { |explained| seen << [id, explained.at('card.daily_handicap')] }
+      reasons :result, with: 'golf_whs_golfer' do
+        facts { {played: '2026-04-11'} }
+        saves differential: 'gross_differential'
+        after { |explained| seen << [id, explained.at('card.daily_handicap')] }
+      end
     end
   end
   let(:round) { round_class.create! }
 
-  before { ReasonMeThis.configure { |config| config.connection = FakeConnection.new(200, golf_trace) } }
-
-  after do
+  around do |example|
+    ReasonMeThis.configure { |config| config.connection = FakeConnection.new(200, golf_trace) }
+    example.run
+  ensure
     ReasonMeThis.configure do |config|
       config.connection = nil
       config.hooks.clear
