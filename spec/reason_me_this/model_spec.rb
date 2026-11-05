@@ -1,14 +1,14 @@
-RSpec.describe Reckoning::Client::Model do
+RSpec.describe ReasonMeThis::Model do
   let(:connection) { FakeConnection.new(200, 'total_paid' => '55830') }
   let(:rep_class) do
     Class.new do
-      include Reckoning::Client::Model
+      include ReasonMeThis::Model
 
       attr_reader :deals
 
       def initialize(deals) = @deals = deals
 
-      reckons :statement, with: 'sales_commission@3', calculation: :year do |year|
+      reasons :statement, with: 'sales_commission@3', calculation: :year do |year|
         {deals: deals.select { |deal| deal[:closed].year == year }}
       end
     end
@@ -16,8 +16,8 @@ RSpec.describe Reckoning::Client::Model do
   let(:deals) { [{id: 'D1', closed: Date.new(2026, 1, 20)}, {id: 'D0', closed: Date.new(2025, 12, 1)}] }
   let(:rep) { rep_class.new(deals) }
 
-  before { Reckoning::Client.configure { |config| config.connection = connection } }
-  after { Reckoning::Client.configure { |config| config.connection = nil } }
+  before { ReasonMeThis.configure { |config| config.connection = connection } }
+  after { ReasonMeThis.configure { |config| config.connection = nil } }
 
   it 'runs the definition on facts the block builds from the instance and the arguments' do
     expect(rep.statement(2026).total_paid).to eq(BigDecimal('55830'))
@@ -35,7 +35,7 @@ RSpec.describe Reckoning::Client::Model do
 
   it 'explains the same run with its steps' do
     connection = FakeConnection.new(200, 'outputs' => {'total_paid' => '55830'}, 'steps' => [])
-    Reckoning::Client.configure { |config| config.connection = connection }
+    ReasonMeThis.configure { |config| config.connection = connection }
 
     expect(rep.statement_explained(2026).outputs.total_paid).to eq(BigDecimal('55830'))
     expect(connection.requests.last.last).to include(trace: true)
@@ -43,7 +43,7 @@ RSpec.describe Reckoning::Client::Model do
 
   it 'runs on the client the instance names, for an app with more than one service' do
     other = FakeConnection.new(200, 'total_paid' => '1')
-    rep.define_singleton_method(:reckoning_client) { Reckoning::Client.new(connection: other) }
+    rep.define_singleton_method(:reason_me_this_client) { ReasonMeThis::Client.new(connection: other) }
 
     expect(rep.statement(2026).total_paid).to eq(1)
     expect(connection.requests).to be_empty

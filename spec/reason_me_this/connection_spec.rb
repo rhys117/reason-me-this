@@ -1,6 +1,6 @@
 require 'socket'
 
-RSpec.describe Reckoning::Client::Connection do
+RSpec.describe ReasonMeThis::Connection do
   def serve(status, body)
     server = TCPServer.new('127.0.0.1', 0)
     received = Queue.new
@@ -39,11 +39,11 @@ RSpec.describe Reckoning::Client::Connection do
     port = closed_port
 
     expect { described_class.new("http://127.0.0.1:#{port}", 'k').request(:get, '/definitions') }.
-      to raise_error(Reckoning::Client::Unreachable, %r{could not reach the service at http://127\.0\.0\.1:#{port}})
+      to raise_error(ReasonMeThis::Unreachable, %r{could not reach the service at http://127\.0\.0\.1:#{port}})
   end
 
   it 'says so when no URL is configured' do
     expect { described_class.new(nil, nil).request(:get, '/definitions') }.
-      to raise_error(Reckoning::Client::Error, 'no URL is configured for the Reckoning service')
+      to raise_error(ReasonMeThis::Error, 'no URL is configured for Reason Me This')
   end
 end

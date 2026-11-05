@@ -1,4 +1,4 @@
-RSpec.describe Reckoning::Client do
+RSpec.describe ReasonMeThis do
   let(:connection) { FakeConnection.new(200, 'total' => '2.3') }
 
   after { described_class.configure { |config| config.connection = nil } }
@@ -23,7 +23,7 @@ RSpec.describe Reckoning::Client do
   it 'builds a client of its own for a URL and key, for an app with more than one service' do
     port = closed_port
 
-    expect { described_class.new(url: "http://127.0.0.1:#{port}/api", api_key: 'k').publish('bill') }.
+    expect { ReasonMeThis::Client.new(url: "http://127.0.0.1:#{port}/api", api_key: 'k').publish('bill') }.
       to raise_error(described_class::Unreachable, /#{port}/)
   end
 end

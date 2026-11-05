@@ -1,30 +1,30 @@
-require 'reckoning/client/version'
-require 'reckoning/client/values'
-require 'reckoning/client/answer'
-require 'reckoning/client/errors'
-require 'reckoning/client/explanation'
-require 'reckoning/client/connection'
-require 'reckoning/client/configuration'
-require 'reckoning/client/model'
+require 'reason_me_this/version'
+require 'reason_me_this/values'
+require 'reason_me_this/answer'
+require 'reason_me_this/errors'
+require 'reason_me_this/explanation'
+require 'reason_me_this/connection'
+require 'reason_me_this/configuration'
+require 'reason_me_this/model'
 require 'forwardable'
 
-module Reckoning
-  class Client
-    class << self
-      extend Forwardable
+module ReasonMeThis
+  class << self
+    extend Forwardable
 
-      def_delegators :default, :run, :explain, :push, :publish, :definitions, :definition
+    def_delegators :default, :run, :explain, :push, :publish, :definitions, :definition
 
-      def configure
-        yield configuration
-        @default = nil
-      end
-
-      def configuration = @configuration ||= Configuration.new
-
-      def default = @default ||= new(**configuration.to_h.compact)
+    def configure
+      yield configuration
+      @default = nil
     end
 
+    def configuration = @configuration ||= Configuration.new
+
+    def default = @default ||= Client.new(**configuration.to_h.compact)
+  end
+
+  class Client
     def initialize(url: nil, api_key: nil, connection: Connection.new(url, api_key))
       @connection = connection
     end

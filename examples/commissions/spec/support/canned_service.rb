@@ -15,7 +15,7 @@ module CannedService
 
   def self.included(group)
     group.let(:service) { Connection.new(JSON.parse(Rails.root.join('spec/fixtures/full_year_statement.json').read)) }
-    group.before { Reckoning::Client.configure { |config| config.connection = service } }
-    group.after { Reckoning::Client.configure { |config| config.connection = nil } }
+    group.before { ReasonMeThis.configure { |config| config.connection = service } }
+    group.after { ReasonMeThis.configure { |config| config.connection = nil } }
   end
 end

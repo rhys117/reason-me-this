@@ -1,4 +1,4 @@
-RSpec.describe Reckoning::Client::Answer do
+RSpec.describe ReasonMeThis::Answer do
   subject(:answer) do
     described_class.new('total_paid' => '55830', 'rate' => '-0.125', 'id' => 'D1',
                         'by_quarter' => [{'start' => '2026-01-01', 'payout' => '5000'}], 'version' => 3)

@@ -1,34 +1,33 @@
-# reckoning-client
+# reason_me_this
 
-The Ruby SDK for a hosted Reckoning service. It runs, explains, pushes and publishes definitions over HTTP
+The Ruby client for [Reason Me This](https://reason-me-this.com). It runs, explains, pushes and publishes definitions over HTTP
 and keeps every number exact on the way out and on the way back.
 
-It only speaks HTTP: it needs nothing beyond Ruby's standard library and does not load the Reckoning
-engine.
+It only speaks HTTP: it needs nothing beyond Ruby's standard library and does not load the engine.
 
 ## Install
 
 ```ruby
-gem "reckoning-client"
+gem "reason_me_this"
 ```
 
 ## Configure
 
 ```ruby
-require "reckoning/client"
+require "reason_me_this"
 
-Reckoning::Client.configure do |config|
-  config.url = ENV["RECKONING_API_URL"]      # https://host/api
-  config.api_key = ENV["RECKONING_API_KEY"]
+ReasonMeThis.configure do |config|
+  config.url = ENV["RMT_API_URL"]     # https://reason-me-this.com/api
+  config.api_key = ENV["RMT_API_KEY"]
 end
 ```
 
-In Rails this belongs in `config/initializers/reckoning.rb`.
+In Rails this belongs in `config/initializers/reason_me_this.rb`.
 
 ## Run
 
 ```ruby
-answer = Reckoning::Client.run("sales_commission@3", facts, calculation: :year)
+answer = ReasonMeThis.run("sales_commission@3", facts, calculation: :year)
 
 answer.total_paid        # => BigDecimal("55830")
 answer[:by_quarter]      # => [{start: Date(2026-01-01), payout: BigDecimal("5000"), ...}, ...]
@@ -65,7 +64,7 @@ money and rates; a `Float` goes out as Ruby writes it.
 ## Explain
 
 ```ruby
-explained = Reckoning::Client.explain("sales_commission", facts, calculation: :year)
+explained = ReasonMeThis.explain("sales_commission", facts, calculation: :year)
 
 explained.outputs      # an answer, as run gives
 explained.steps        # each step with its value, in the order they ran
@@ -74,17 +73,17 @@ explained.steps        # each step with its value, in the order they ran
 ## Manage definitions
 
 ```ruby
-Reckoning::Client.push("bill", yaml: File.read("bill.yml"), cases: File.read("cases.yml"))
+ReasonMeThis.push("bill", yaml: File.read("bill.yml"), cases: File.read("cases.yml"))
 # => {problems: [], passed: 4, failed: 0, cases: [...]}
 
-Reckoning::Client.publish("bill")        # => 4, the new version
-Reckoning::Client.definitions            # => [{name: "bill", published_version: 4, updated_at: "..."}]
-Reckoning::Client.definition("bill")     # => {name: "bill", yaml: "...", cases: "...", published_version: 4}
+ReasonMeThis.publish("bill")        # => 4, the new version
+ReasonMeThis.definitions            # => [{name: "bill", published_version: 4, updated_at: "..."}]
+ReasonMeThis.definition("bill")     # => {name: "bill", yaml: "...", cases: "...", published_version: 4}
 ```
 
 ## Errors
 
-Every error is a `Reckoning::Client::Error`, with a message in plain words.
+Every error is a `ReasonMeThis::Error`, with a message in plain words.
 
 | Error | When |
 | --- | --- |
@@ -98,21 +97,21 @@ Every error is a `Reckoning::Client::Error`, with a message in plain words.
 
 ```ruby
 begin
-  Reckoning::Client.run("bill", facts)
-rescue Reckoning::Client::InvalidFacts => e
+  ReasonMeThis.run("bill", facts)
+rescue ReasonMeThis::InvalidFacts => e
   e.problems   # => ["hours is missing"]
 end
 ```
 
 ## In a model
 
-`Reckoning::Client::Model` works in any class, ActiveRecord or not.
+`ReasonMeThis::Model` works in any class, ActiveRecord or not.
 
 ```ruby
 class Rep < ApplicationRecord
-  include Reckoning::Client::Model
+  include ReasonMeThis::Model
 
-  reckons :statement, with: "sales_commission@3", calculation: :year do |year|
+  reasons :statement, with: "sales_commission@3", calculation: :year do |year|
     {deals: deals.closed_in(year).map(&:to_fact), quarters: quarter_targets.in(year).map(&:to_fact)}
   end
 end
@@ -129,17 +128,17 @@ The block runs on the instance, takes the method's arguments, and returns the fa
 Build a client for each service and use it as you would the module:
 
 ```ruby
-client = Reckoning::Client.new(url: tenant.reckoning_url, api_key: tenant.reckoning_key)
+client = ReasonMeThis::Client.new(url: tenant.rmt_url, api_key: tenant.rmt_key)
 client.run("sales_commission", facts, calculation: :year)
 ```
 
-A model runs on `reckoning_client`, which is the configured client unless you say otherwise:
+A model runs on `reason_me_this_client`, which is the configured client unless you say otherwise:
 
 ```ruby
 class Rep < ApplicationRecord
-  include Reckoning::Client::Model
+  include ReasonMeThis::Model
 
-  def reckoning_client = tenant.reckoning_client
+  def reason_me_this_client = tenant.reason_me_this_client
 end
 ```
 
@@ -154,17 +153,17 @@ class FakeConnection
   def request(_method, _path, _body = nil) = [200, @body]
 end
 
-Reckoning::Client.configure { |config| config.connection = FakeConnection.new("total_paid" => "55830") }
+ReasonMeThis.configure { |config| config.connection = FakeConnection.new("total_paid" => "55830") }
 ```
 
 ## Against a local service
 
-Run the Reckoning sample app on port 3000, make an API key there, then:
+Run the service on port 3000, make an API key there, then:
 
 ```sh
-export RECKONING_API_URL=http://localhost:3000/api
-export RECKONING_API_KEY=your-key
-bundle exec ruby -Ilib -r reckoning/client -e 'Reckoning::Client.configure { |c| c.url = ENV["RECKONING_API_URL"]; c.api_key = ENV["RECKONING_API_KEY"] }; p Reckoning::Client.definitions'
+export RMT_API_URL=http://localhost:3000/api
+export RMT_API_KEY=your-key
+bundle exec ruby -Ilib -r reason_me_this -e 'ReasonMeThis.configure { |c| c.url = ENV["RMT_API_URL"]; c.api_key = ENV["RMT_API_KEY"] }; p ReasonMeThis.definitions'
 ```
 
 ## Example
