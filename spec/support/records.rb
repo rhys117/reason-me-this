@@ -36,8 +36,9 @@ end
 module Records
   def self.included(group) = group.before { %w[hole_scores rounds golfers].each { |table| ActiveRecord::Base.connection.execute("DELETE FROM #{table}") } }
 
-  def golf_trace(points: %w[2 3])
-    {'outputs' => {'gross_differential' => '11.2', 'stableford' => '44', 'new_ga_handicap' => '16.4'},
+  def golf_trace(points: %w[2 3], events: [])
+    {'events' => events,
+     'outputs' => {'gross_differential' => '11.2', 'stableford' => '44', 'new_ga_handicap' => '16.4'},
      'steps' => [{'step' => 'card', 'value' => {},
                   'steps' => [{'step' => 'daily_handicap', 'value' => '23'},
                               {'step' => 'scored', 'value' => points.each_with_index.map do |each, index|

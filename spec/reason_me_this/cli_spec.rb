@@ -75,6 +75,14 @@ RSpec.describe ReasonMeThis::CLI do
       expect(connection.requests.last.last).to eq(facts: {'units' => BigDecimal('2.50')}, calculation: 'total', version: 'draft', trace: true)
     end
 
+    it 'lists the events a traced run set off, in text' do
+      answers[[:post, '/definitions/bill/run']] = [200, {'outputs' => {'total' => '6'}, 'steps' => [{'step' => 'total', 'value' => '6'}],
+                                                         'events' => [{'name' => 'large', 'data' => {'total' => '6'}}]}]
+
+      expect(rmt('run', 'bill', '--trace', '--text', input: '{"units": 2}')).to eq(0)
+      expect(out.string).to end_with("Sets off\n  large  total 6\n")
+    end
+
     it 'exits 1 with the problems when the facts do not fit' do
       answers[[:post, '/try']] = [422, {'problems' => ['facts need units']}]
 

@@ -35,7 +35,10 @@ module ReasonMeThis
       name, pinned = name.to_s.split('@', 2)
       version ||= pinned&.match?(/\A\d+\z/) ? Integer(pinned) : pinned
       answer = request(:post, at(name, :run), {facts:, calculation:, version:, trace: (true if trace)}.compact)
-      trace ? Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps], version: answer[:version]) : Answer.new(answer)
+      return Answer.new(answer) unless trace
+
+      Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps], version: answer[:version],
+                      events: Array(answer[:events]).map { |event| Event.read(event) })
     end
 
     def explain(name, facts, calculation: nil, version: nil) = run(name, facts, calculation:, version:, trace: true)

@@ -23,7 +23,8 @@ RSpec.describe ReasonMeThis::Model, '#keeps_receipts' do
   before do
     Receipts.create_table
     ActiveRecord::Base.connection.execute('DELETE FROM reason_me_this_receipts')
-    ReasonMeThis.configure { |config| config.connection = FakeConnection.new(200, golf_trace.merge('version' => 3)) }
+    traced = golf_trace(events: [{'name' => 'eagle', 'data' => {'hole' => '7'}}]).merge('version' => 3)
+    ReasonMeThis.configure { |config| config.connection = FakeConnection.new(200, traced) }
   end
 
   after { ReasonMeThis.configure { |config| config.connection = nil } }
@@ -36,6 +37,7 @@ RSpec.describe ReasonMeThis::Model, '#keeps_receipts' do
     expect(receipt.facts).to eq('played' => '2026-04-11')
     expect(receipt.outputs).to include('stableford' => '44')
     expect(receipt.steps.first).to include('step' => 'card')
+    expect(receipt.events).to eq([{'name' => 'eagle', 'data' => {'hole' => '7'}}])
   end
 
   it 'keeps no receipt when the reasoning is refused' do

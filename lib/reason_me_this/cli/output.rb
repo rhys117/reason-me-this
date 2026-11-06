@@ -41,8 +41,17 @@ module ReasonMeThis
         def outputs(values) = fields(values, 0).join("\n")
 
         def trace(explained)
-          [outputs(explained[:outputs]), '', bold('How it was worked out'), *steps(explained[:steps], 1)].join("\n")
+          [outputs(explained[:outputs]), '', bold('How it was worked out'), *steps(explained[:steps], 1), *events(Array(explained[:events]))].join("\n")
         end
+
+        def events(list)
+          return [] if list.empty?
+
+          width = list.map { |event| event[:name].to_s.size }.max
+          ['', bold('Sets off'), *list.map { |event| "  #{event[:name].to_s.ljust(width)}  #{carried(event[:data])}".rstrip }]
+        end
+
+        def carried(data) = data.map { |name, value| "#{name} #{value}" }.join(', ')
 
         def problems(answer)
           listed = answer[:problems]

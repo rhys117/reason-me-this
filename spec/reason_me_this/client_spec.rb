@@ -42,6 +42,18 @@ RSpec.describe ReasonMeThis::Client do
     it 'says which version ran' do
       expect(client.explain('bill', {hours: 2}).version).to eq(3)
     end
+
+    it 'has no events when the service lists none' do
+      expect(client.explain('bill', {hours: 2}).events).to eq([])
+    end
+
+    context 'when the answer set off events' do
+      let(:body) { {'outputs' => {'total' => '120.5'}, 'steps' => [], 'events' => [{'name' => 'over_limit', 'data' => {'over_by' => '20.5'}}]} }
+
+      it 'reads each event by name, with exact values' do
+        expect(client.explain('bill', {hours: 2}).events).to eq([ReasonMeThis::Event.new(name: :over_limit, data: {over_by: BigDecimal('20.5')})])
+      end
+    end
   end
 
   describe '#push' do
