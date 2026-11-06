@@ -87,7 +87,11 @@ explained = ReasonMeThis.explain("sales_commission", facts, calculation: :year)
 
 explained.outputs      # an answer, as run gives
 explained.steps        # each step with its value, in the order they ran
+explained.events       # what the answer set off: [Event(name: :quota_hit, data: {over_by: BigDecimal("1200")})]
 ```
+
+A blueprint names its events beside its outputs (see the engine's Events guide). Only a traced run lists
+them; a plain `run` answers the outputs alone.
 
 ## Manage definitions
 
@@ -141,13 +145,14 @@ class Round < ApplicationRecord
     saves into: :hole_scores, from: "card.scored", by: :hole
     saves on: :golfer, handicap_index: "new_ga_handicap"
     after { |explained| golfer.handicap_changes.create!(to: explained.at("new_ga_handicap")) }
+    on(:handicap_cut) { |event| HandicapMailer.cut(golfer, event.data).deliver_later }
     keeps_receipts
   end
 end
 
 round.result             # run and read; saves nothing, remembered on this round
 round.result_explained   # the same, with every step
-round.result!            # run with every step, then save, in one transaction
+round.result!            # run with every step, then save, in one transaction, then handle its events
 ```
 
 `facts` runs on the record and takes the method's arguments: `facts { |year| ... }` makes `rep.statement(2026)`.
@@ -187,15 +192,33 @@ the same paths, and an `after` hook can save anything else: `after { |explained|
 Everything happens in one transaction with the record's own `save!`: a refusal from the service, an
 invalid record or a hook that raises leaves nothing written.
 
-### Hooks
+### Hooks and events
 
-`after { |explained| ... }` runs on the record after the saves, inside the transaction. To store what your
-app needs from every reasoning, in tables of your own, add a hook to the configuration:
+A recipe has two kinds of hook, for two jobs:
+
+| | `after { \|explained\| ... }` | `on(:name) { \|event, explained\| ... }` |
+| --- | --- | --- |
+| For | writing more data, all or nothing with the saves | acting on what the rules decided: mail, jobs, calls to other services |
+| Runs | on every `!`, inside the transaction, after the saves | for each event the answer set off, once the transaction has committed |
+| When it raises | nothing is written | the saves stand; the error reaches the caller |
+
+`after` is where to save anything `saves` cannot say, such as a new row: `after { |explained| update!(...) }`.
+Because it runs inside the transaction, a job enqueued or a mail sent there can go out for a run that then
+rolls back. Put those in `on`, against an event the blueprint names, so the condition is tested by the
+blueprint's cases and the action waits for the commit. When `!` runs inside a transaction of your own, `on`
+waits for that one to commit too, and never runs if it rolls back (Rails 7.2 or later; before that it runs
+as soon as `!` has saved).
+
+To act for every reasoning, in tables or jobs of your own, add a hook to the configuration:
 
 ```ruby
 ReasonMeThis.configure do |config|
-  config.after_reasoning do |record, name, explained|
+  config.after_reasoning do |record, name, explained|          # inside the transaction
     CalculationLog.create!(subject: record, reasoning: name, version: explained.version, stableford: explained.at("stableford"))
+  end
+
+  config.on_event do |record, name, event|                     # once it has committed
+    EventRelayJob.perform_later(record, name.to_s, event.name.to_s, event.data)
   end
 end
 ```
