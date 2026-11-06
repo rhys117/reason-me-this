@@ -37,7 +37,15 @@ module ReasonMeThis
         ReasonMeThis.configuration.hooks.each { |hook| hook.call(self, name, explained) }
         keep_receipt(recipe, name, facts, explained) if recipe.receipts
       end
+      committed { announce(recipe, name, explained) }
       explained
+    end
+
+    def announce(recipe, name, explained)
+      explained.events.each do |event|
+        recipe.handlers.fetch(event.name, []).each { |handler| instance_exec(event, explained, &handler) }
+        ReasonMeThis.configuration.event_handlers.each { |handler| handler.call(self, name, event) }
+      end
     end
 
     def reasoning(recipe, call, args)
@@ -50,5 +58,11 @@ module ReasonMeThis
     end
 
     def transactionally(&) = self.class.respond_to?(:transaction) ? self.class.transaction(&) : yield
+
+    # Inside a transaction the caller opened, after_all_transactions_commit waits for it to commit, and never
+    # runs if it rolls back. Outside one, or without Active Record, the block runs now.
+    def committed(&)
+      defined?(ActiveRecord) && ActiveRecord.respond_to?(:after_all_transactions_commit) ? ActiveRecord.after_all_transactions_commit(&) : yield
+    end
   end
 end
