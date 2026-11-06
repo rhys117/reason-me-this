@@ -1,6 +1,10 @@
 module ReasonMeThis
-  Explanation = Data.define(:outputs, :steps, :version) do
-    def initialize(outputs:, steps:, version: nil) = super
+  Event = Data.define(:name, :data) do
+    def self.read(event) = new(name: event[:name].to_sym, data: event.fetch(:data, {}))
+  end
+
+  Explanation = Data.define(:outputs, :steps, :version, :events) do
+    def initialize(outputs:, steps:, version: nil, events: []) = super
 
     def at(path)
       names = path.to_s.split('.')
