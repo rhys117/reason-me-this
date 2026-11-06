@@ -226,7 +226,7 @@ end
 ### Receipts
 
 `keeps_receipts` writes a `ReasonMeThis::Receipt` for every `!`: the reasoning, the blueprint and the
-version that ran, the calculation, and the facts, outputs and steps as the service showed them, so a
+version that ran, the calculation, and the facts, outputs, steps and events as the service showed them, so a
 result can be explained long after the rules change. Add the table once:
 
 ```sh

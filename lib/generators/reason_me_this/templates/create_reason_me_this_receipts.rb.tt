@@ -9,6 +9,7 @@ class CreateReasonMeThisReceipts < ActiveRecord::Migration[<%= ActiveRecord::Mig
       t.json :facts, null: false
       t.json :outputs, null: false
       t.json :steps, null: false
+      t.json :events, null: false
       t.datetime :created_at, null: false
     end
   end

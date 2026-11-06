@@ -54,7 +54,8 @@ module ReasonMeThis
 
     def keep_receipt(recipe, name, facts, explained)
       reason_me_this_receipts.create!(reasoning: name, blueprint: recipe.blueprint, version: explained.version, calculation: recipe.calculation,
-                                      facts: Values.text(facts), outputs: Values.text(explained.outputs.to_h), steps: Values.text(explained.steps))
+                                      facts: Values.text(facts), outputs: Values.text(explained.outputs.to_h), steps: Values.text(explained.steps),
+                                      events: Values.text(explained.events.map(&:to_h)))
     end
 
     def transactionally(&) = self.class.respond_to?(:transaction) ? self.class.transaction(&) : yield

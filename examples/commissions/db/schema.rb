@@ -64,6 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_130747) do
     t.json "facts", null: false
     t.json "outputs", null: false
     t.json "steps", null: false
+    t.json "events", null: false
     t.datetime "created_at", null: false
     t.index ["record_type", "record_id"], name: "index_reason_me_this_receipts_on_record"
   end
