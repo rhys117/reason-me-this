@@ -19,8 +19,8 @@ module ReasonMeThis
       at, given = signature.to_s.split(',').to_h { |part| part.split('=', 2) }.values_at('t', 'v1')
       raise InvalidSignature.new('the delivery is not signed') unless at && given
       raise InvalidSignature.new("the delivery was signed more than #{tolerance} seconds from now") if (now.to_i - at.to_i).abs > tolerance
-      raise InvalidSignature.new('the signature does not match') unless OpenSSL.secure_compare(OpenSSL::HMAC.hexdigest('SHA256', secret, "#{at}.#{body}"),
-given)
+      expected = OpenSSL::HMAC.hexdigest('SHA256', secret, "#{at}.#{body}")
+      raise InvalidSignature.new('the signature does not match') unless OpenSSL.secure_compare(expected, given)
 
       Values.read(JSON.parse(body, symbolize_names: true))
     end
