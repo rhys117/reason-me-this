@@ -15,7 +15,7 @@ module ReasonMeThis
       def initialize
         @savings = []
         @hooks = []
-        @handlers = Hash.new { |all, name| all[name] = [] }
+        @handlers = {}
       end
 
       def facts(&given)
@@ -27,7 +27,7 @@ module ReasonMeThis
 
       def after(&hook) = hooks << hook
 
-      def on(event, &handler) = handlers[event.to_sym] << handler
+      def on(event, &handler) = (handlers[event.to_sym] ||= []) << handler
 
       def keeps_receipts = @receipts = true
     end
