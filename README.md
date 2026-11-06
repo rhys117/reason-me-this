@@ -116,6 +116,7 @@ Every error is a `ReasonMeThis::Error`, with a message in plain words.
 | `StepFailed` | a step failed while running (422); the message says which |
 | `Timeout` | the run took too long on the service (503) |
 | `Unreachable` | the service could not be reached: refused, DNS, or timed out |
+| `InvalidSignature` | `Webhook.verify` was given a delivery that is unsigned, signed with another secret, or too old |
 | `Rejected` | `push` or `publish` was refused: problems in the definition or failing cases; `#report` has them |
 
 ```ruby
@@ -223,6 +224,9 @@ ReasonMeThis.configure do |config|
 end
 ```
 
+`on` acts on runs your app makes through a model. For events from any run of a published version, wherever
+it came from, subscribe on the service instead (see [Webhooks](#webhooks)).
+
 ### Receipts
 
 `keeps_receipts` writes a `ReasonMeThis::Receipt` for every `!`: the reasoning, the blueprint and the
@@ -238,6 +242,38 @@ bin/rails db:migrate
 round.reason_me_this_receipts.last.version   # => "3"
 round.reason_me_this_receipts.last.steps     # the whole working, as it was
 ```
+
+## Webhooks
+
+The service can act on events itself. In the app's **Subscriptions** page, subscribe to a blueprint's
+events, then either post them to a webhook or run another blueprint on their data. Every run of a published
+version through the API delivers, whoever made it. **Deliveries** lists each one and sends a failed one again.
+
+A webhook gets a JSON POST, signed with a secret shown once when the subscription is made:
+
+```json
+{"id": "evt_6f1c...", "event": "quota_hit", "definition": "commission", "version": 3, "calculation": "year",
+ "data": {"rep": "42", "over_by": "1200"}, "ran_at": "2026-11-06T10:30:00Z", "chain": ["commission@3"]}
+```
+
+`Webhook.verify` checks the `RMT-Signature` header and reads the body as an event, with exact values:
+
+```ruby
+class RmtWebhooksController < ActionController::API
+  def create
+    event = ReasonMeThis::Webhook.verify(request.raw_post, request.headers["RMT-Signature"], ENV["RMT_WEBHOOK_SECRET"])
+    QuotaHitJob.perform_later(event.data) if event.name == :quota_hit
+    head :no_content
+  rescue ReasonMeThis::InvalidSignature
+    head :unauthorized
+  end
+end
+```
+
+`Webhook.payload` gives the whole body (`id`, `definition`, `version`, `chain` and the rest) instead. A
+delivery signed more than five minutes from now is refused, so a captured one cannot be replayed. Use `id` to
+ignore a delivery you have already handled: one that got no 2xx is sent again, up to nine times over about a
+day.
 
 ## More than one service
 
