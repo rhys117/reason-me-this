@@ -15,7 +15,7 @@ module ReasonMeThis
   class << self
     extend Forwardable
 
-    def_delegators :default, :run, :explain, :push, :publish, :definitions, :definition
+    def_delegators :default, :run, :explain, :schema, :push, :publish, :definitions, :definition
 
     def configure
       yield configuration
@@ -51,6 +51,13 @@ module ReasonMeThis
       request(:post, at(name, :publish), (body unless body.empty?), invalid: Rejected)
     end
 
+    # The JSON Schemas of a calculation's inputs and outputs, with string keys and values as sent, for a validator.
+    def schema(name, calculation: nil, version: nil, on: nil)
+      name, version = pinned(name, version)
+      query = URI.encode_www_form(Values.write({calculation:, version:, on:}.compact))
+      request(:get, [at(name, :schema), *(query unless query.empty?)].join('?'), read: false)
+    end
+
     def definitions = request(:get, '/definitions')[:definitions]
 
     def definition(name) = request(:get, at(name))
@@ -64,10 +71,11 @@ module ReasonMeThis
       [name, version || (pin&.match?(/\A\d+\z/) ? Integer(pin) : pin)]
     end
 
-    def request(method, path, body = nil, invalid: InvalidFacts)
+    def request(method, path, body = nil, invalid: InvalidFacts, read: true)
       status, answer = @connection.request(method, path, body)
-      answer = Values.read(answer)
-      status.between?(200, 299) ? answer : raise(refusal(status, answer, invalid))
+      return (read ? Values.read(answer) : answer) if status.between?(200, 299)
+
+      raise(refusal(status, Values.read(answer), invalid))
     end
 
     def refusal(status, answer, invalid)

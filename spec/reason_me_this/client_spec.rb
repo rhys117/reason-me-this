@@ -116,6 +116,28 @@ RSpec.describe ReasonMeThis::Client do
     end
   end
 
+  describe '#schema' do
+    let(:body) do
+      {'calculation' => 'bill', 'version' => 3,
+       'inputs' => {'$schema' => 'https://json-schema.org/draft/2020-12/schema', 'properties' => {'plan' => {'enum' => %w[1042 2026-07-01]}}},
+       'outputs' => {'properties' => {'total' => {'type' => %w[string number]}}}}
+    end
+
+    it 'answers the JSON Schemas as the service sent them, for a JSON Schema validator' do
+      expect(client.schema('bill')).to eq(body)
+      expect(connection.requests).to eq([[:get, '/definitions/bill/schema', nil]])
+    end
+
+    it 'asks for a calculation of a pinned or given version, or the one in effect on a day' do
+      client.schema('bill@3', calculation: :year)
+      client.schema('bill', on: Date.new(2026, 7, 1))
+
+      expect(connection.requests.map { |request| request[1] }).to eq(
+        ['/definitions/bill/schema?calculation=year&version=3', '/definitions/bill/schema?on=2026-07-01']
+      )
+    end
+  end
+
   describe '#definitions' do
     let(:body) { {'definitions' => [{'name' => 'bill', 'published_version' => 3, 'updated_at' => '2026-11-04T10:00:00Z'}]} }
 
