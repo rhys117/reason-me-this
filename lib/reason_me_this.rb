@@ -32,17 +32,17 @@ module ReasonMeThis
       @connection = connection
     end
 
-    def run(name, facts, calculation: nil, version: nil, trace: false)
+    def run(name, facts, calculation: nil, version: nil, on: nil, trace: false)
       name, pinned = name.to_s.split('@', 2)
       version ||= pinned&.match?(/\A\d+\z/) ? Integer(pinned) : pinned
-      answer = request(:post, at(name, :run), {facts:, calculation:, version:, trace: (true if trace)}.compact)
+      answer = request(:post, at(name, :run), {facts:, calculation:, version:, on:, trace: (true if trace)}.compact)
       return Answer.new(answer) unless trace
 
       Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps], version: answer[:version],
                       events: Array(answer[:events]).map { |event| Event.read(event) })
     end
 
-    def explain(name, facts, calculation: nil, version: nil) = run(name, facts, calculation:, version:, trace: true)
+    def explain(name, facts, calculation: nil, version: nil, on: nil) = run(name, facts, calculation:, version:, on:, trace: true)
 
     def push(name, yaml:, cases: '') = request(:put, at(name), {yaml:, cases:}, invalid: Rejected)
 

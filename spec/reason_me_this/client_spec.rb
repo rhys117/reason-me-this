@@ -21,6 +21,12 @@ RSpec.describe ReasonMeThis::Client do
       expect(connection.requests.last).to eq([:post, '/definitions/sales_commission/run', {facts: {}, version: 3}])
     end
 
+    it 'runs the version in effect on a day' do
+      client.run('sales_commission', {}, on: Date.new(2026, 7, 1))
+
+      expect(connection.requests.last.last).to eq(facts: {}, on: Date.new(2026, 7, 1))
+    end
+
     it 'runs the version asked for, which wins over a pinned name' do
       client.run('sales_commission@3', {}, version: 'draft')
 
