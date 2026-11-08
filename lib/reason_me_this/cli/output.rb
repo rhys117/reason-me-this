@@ -85,7 +85,11 @@ module ReasonMeThis
           ['', "  #{fail(result[:name])}", *detail]
         end
 
-        def published(answer, name:) = pass("Published #{name} v#{answer[:version]}")
+        def published(answer, name:)
+          waiting = answer.key?(:live_version) && answer[:live_version] != answer[:version]
+          live = answer[:live_version] ? "v#{answer[:live_version]} is live" : 'none is live'
+          pass("Published #{name} v#{answer[:version]}#{", in effect from #{answer[:effective_from]}; #{live}" if waiting}")
+        end
 
         def definitions(answer)
           rows = answer[:definitions].map do |definition|

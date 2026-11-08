@@ -22,12 +22,18 @@ module ReasonMeThis
 
       Publish and run definitions:
         push NAME BLUEPRINT [CASES]             save a definition's draft, checked and tested
-        publish NAME                            publish the draft as the next version
-        run NAME [--version N|draft] [...]      run a definition, or a shipped blueprint, by name
+        publish NAME [--effective-from DATE] [--no-live]
+                                                publish the draft as the next version
+        run NAME [--version N|draft|--on DATE] [...]
+                                                run a definition, or a shipped blueprint, by name
+        schema NAME [--version N|draft|--on DATE] [--calculation NAME]
+                                                print JSON Schemas for a calculation's inputs and outputs
         list                                    list the definitions and their published versions
         pull NAME [--dir DIR]                   write DIR/NAME/blueprint.yml and cases.yml
 
       A BLUEPRINT ending in .yml or .yaml or containing a / is a file; anything else is a name.
+      --on YYYY-MM-DD picks the version in effect that day. publish --effective-from makes the new version take
+      effect on that day (today by default); --no-live keeps the version that is live now live, so the new one waits.
       Every command but guide and describe needs RMT_API_KEY (create one at #{KEYS}).
       RMT_API_URL defaults to #{HOSTED}.
 
@@ -35,8 +41,9 @@ module ReasonMeThis
         --json                                  answer in JSON (the default when output is not a terminal)
         --text                                  answer in text (the default at a terminal)
 
-      Exit codes: 0 success, 1 a run failed, 2 the blueprint has problems, 3 a case failed, 64 usage,
-      69 the service could not be reached, 77 the service refused the key
+      Exit codes: 0 success, 1 a run failed or the service has no such definition or version (404, 410),
+      2 the blueprint has problems, 3 a case failed, 64 usage, 69 the service could not be reached,
+      77 the service refused the key
     TEXT
 
     WORKFLOW = <<~MARKDOWN.freeze
@@ -59,13 +66,17 @@ module ReasonMeThis
          was reached when a value surprises you.
       8. `rmt push NAME BLUEPRINT CASES` saves it as the draft of the definition NAME, and `rmt publish NAME`
          makes the draft the next version, which applications call. A draft with problems or a failing case
-         is refused.
+         is refused. `--effective-from DATE` makes it take effect on that day, and `--no-live` keeps the live
+         version live.
+      9. `rmt run NAME --facts FACTS.json` runs the live version; `--version draft` tries the draft first, and
+         `--on DATE` runs the version in effect that day. `rmt schema NAME` prints the JSON Schemas of its facts
+         and outputs, for a validator.
 
       Every command prints JSON to standard output when it is not a terminal, which is how an agent runs it,
-      and text at a terminal; `--json` or `--text` chooses either way. Exit codes: 0 success, 1 a run failed,
-      2 the blueprint has problems, 3 a case failed, 64 usage, 69 the service could not be reached, 77 the
-      service refused the key. A blueprint imports others by name (`imports: [rates]`, `rates@2`,
-      `rates@draft`), never by path.
+      and text at a terminal; `--json` or `--text` chooses either way. Exit codes: 0 success, 1 a run failed
+      or the service has no such definition or version, 2 the blueprint has problems, 3 a case failed,
+      64 usage, 69 the service could not be reached, 77 the service refused the key. A blueprint imports
+      others by name (`imports: [rates]`, `rates@2`, `rates@draft`), never by path.
 
     MARKDOWN
 
@@ -100,7 +111,7 @@ module ReasonMeThis
     def dispatch(command, argv)
       case command
       when 'guide', 'describe', 'list' then send(command)
-      when 'check', 'test', 'run', 'push', 'publish', 'pull' then argv.first ? send(command, argv) : usage
+      when 'check', 'test', 'run', 'schema', 'push', 'publish', 'pull' then argv.first ? send(command, argv) : usage
       else usage
       end
     end
@@ -137,15 +148,20 @@ module ReasonMeThis
       options = {}
       OptionParser.new do |parser|
         parser.on('--facts FILE') { |file| options[:facts] = file }
-        parser.on('--calculation NAME') { |name| options[:calculation] = name }
-        parser.on('--version VERSION') { |version| options[:version] = version }
+        choosing(parser, options)
         parser.on('--trace') { options[:trace] = true }
       end.parse!(argv)
       facts = read_facts(options) or return 1
-      body = {facts:, **options.slice(:calculation, :version, :trace)}
+      body = {facts:, **options.slice(:calculation, :version, :on, :trace)}
       return ran(:post, "/definitions/#{argv.first}/run", body, options) unless path?(argv.first)
 
-      ran(:post, '/try', {yaml: File.read(argv.first), **body.except(:version)}, options)
+      ran(:post, '/try', {yaml: File.read(argv.first), **body.except(:version, :on)}, options)
+    end
+
+    def choosing(parser, options)
+      parser.on('--calculation NAME') { |name| options[:calculation] = name }
+      parser.on('--version VERSION') { |version| options[:version] = version }
+      parser.on('--on DATE') { |day| options[:on] = day }
     end
 
     def ran(method, path, body, options)
@@ -165,6 +181,21 @@ module ReasonMeThis
       nil
     end
 
+    def schema(argv)
+      options = {}
+      OptionParser.new { |parser| choosing(parser, options) }.parse!(argv)
+      query = options.empty? ? '' : "?#{URI.encode_www_form(options)}"
+      on_service(:get, "/definitions/#{argv.first}/schema#{query}") do |status, answer|
+        status == 200 ? print_schema(answer) : answered(:refusal, answer, 1)
+      end
+    end
+
+    # A JSON Schema is JSON, so it prints as JSON at a terminal too.
+    def print_schema(schema)
+      @out.puts(JSON.pretty_generate(schema))
+      0
+    end
+
     def push(argv)
       name, blueprint, cases = argv
       return usage unless blueprint
@@ -174,7 +205,12 @@ module ReasonMeThis
     end
 
     def publish(argv)
-      on_service(:post, "/definitions/#{argv.first}/publish") do |status, answer|
+      options = {}
+      OptionParser.new do |parser|
+        parser.on('--effective-from DATE') { |day| options[:effective_from] = day }
+        parser.on('--[no-]live') { |live| options[:live] = live }
+      end.parse!(argv)
+      on_service(:post, "/definitions/#{argv.first}/publish", (options unless options.empty?)) do |status, answer|
         status == 201 ? answered(:published, answer, 0, name: argv.first) : answered(:report, answer, proven(answer))
       end
     end

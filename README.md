@@ -22,14 +22,20 @@ rmt guide                                    # how to build a blueprint
 rmt check bill.yml                           # exit 2 while it has problems
 rmt test bill.yml cases.yml                  # exit 3 while a case fails
 rmt push bill bill.yml cases.yml && rmt publish bill
+rmt publish bill --effective-from 2027-01-01 --no-live
 echo '{"plan": "flat_rate"}' | rmt run bill --trace
+echo '{"plan": "flat_rate"}' | rmt run bill --on 2026-07-01
+rmt schema bill --calculation bill           # JSON Schemas of its facts and outputs
 rmt run electricity_bill --facts facts.json  # a shipped blueprint, by name
 ```
 
 `check`, `test` and `run` on a file send its text to the service and save nothing. Exit codes: 0 success,
-1 a run failed, 2 problems, 3 a case failed, 64 usage, 69 the service could not be reached, 77 the key was
-refused. `rmt help` lists every command. `RMT_API_URL` points it at another service. `rmt` runs the live
-version or `--version N`; a schema, `on:` and publish's `effective_from:` and `live:` are in Ruby only.
+1 a run failed or no such definition or version, 2 problems, 3 a case failed, 64 usage, 69 the service could
+not be reached, 77 the key was refused. `rmt help` lists every command. `RMT_API_URL` points it at another
+service. `rmt run` and `rmt schema` take the live version, `--version N` or `draft`, or `--on YYYY-MM-DD` for
+the version in effect that day. `rmt publish` takes `--effective-from YYYY-MM-DD` (today by default) and
+`--no-live`, which keeps the live version live so the new one waits. `rmt schema` prints JSON even at a
+terminal.
 
 ## Configure
 
