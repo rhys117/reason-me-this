@@ -28,6 +28,9 @@ module ReasonMeThis
   end
 
   class Client
+    # What the service says of a day, or of a version and a day, it was asked for (Day::Invalid in its API).
+    REQUEST_PROBLEM = /\A(?:(?:on|effective_from) should be a date written YYYY-MM-DD, not |give version or on, not both\z)/
+
     def initialize(url: nil, api_key: nil, connection: Connection.new(url, api_key))
       @connection = connection
     end
@@ -55,7 +58,7 @@ module ReasonMeThis
     def schema(name, calculation: nil, version: nil, on: nil)
       name, version = pinned(name, version)
       query = URI.encode_www_form(Values.write({calculation:, version:, on:}.compact))
-      request(:get, [at(name, :schema), *(query unless query.empty?)].join('?'), read: false)
+      request(:get, [at(name, :schema), *(query unless query.empty?)].join('?'), invalid: InvalidRequest, read: false)
     end
 
     def definitions = request(:get, '/definitions')[:definitions]
@@ -83,11 +86,13 @@ module ReasonMeThis
       in [401, _] then Unauthorized.new('the service refused the API key')
       in [404, {error:}] then NotFound.new(error)
       in [410, {error:}] then Gone.new(error)
-      in [422, {problems:}] then invalid.new(answer)
+      in [422, {problems:}] then refused(problems, invalid).new(answer)
       in [422, {error:}] then StepFailed.new(error)
       in [503, {error:}] then Timeout.new(error)
       else Error.new(["the service answered HTTP #{status}", answer[:error]].compact.join(': '))
       end
     end
+
+    def refused(problems, invalid) = problems.one? && problems.first.match?(REQUEST_PROBLEM) ? InvalidRequest : invalid
   end
 end

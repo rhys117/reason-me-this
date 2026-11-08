@@ -187,8 +187,46 @@ RSpec.describe ReasonMeThis::Client do
       end
     end
 
+    {
+      'a day that is not a date' => ['on should be a date written YYYY-MM-DD, not "1 July"', -> (client) { client.run('bill', {}, on: '1 July') }],
+      'both a version and a day' => ['give version or on, not both', -> (client) { client.run('bill', {}, version: 2, on: Date.new(2026, 7, 1)) }],
+      'a schema on a day that is not a date' => ['on should be a date written YYYY-MM-DD, not "soon"', -> (client) { client.schema('bill', on: 'soon') }],
+      'a day to publish from that is not a date' => ['effective_from should be a date written YYYY-MM-DD, not "monday"',
+                                                     -> (client) { client.publish('bill', effective_from: 'monday') }]
+    }.each do |asked, (said, call)|
+      context "with #{asked}" do
+        let(:status) { 422 }
+        let(:body) { {'problems' => [said]} }
+
+        it 'raises InvalidRequest saying what the service said' do
+          expect { call.call(client) }.to raise_error(ReasonMeThis::InvalidRequest) do |error|
+            expect(error.message).to eq(said)
+            expect(error.problems).to eq([said])
+          end
+        end
+      end
+    end
+
+    context 'with a schema for a calculation the definition does not have' do
+      let(:status) { 422 }
+      let(:body) { {'problems' => ['no calculation named week']} }
+
+      it 'raises InvalidRequest, not InvalidFacts, as a schema takes no facts' do
+        expect { client.schema('bill', calculation: :week) }.to raise_error(ReasonMeThis::InvalidRequest, 'no calculation named week')
+      end
+    end
+
+    context 'with facts that mention a date' do
+      let(:status) { 422 }
+      let(:body) { {'problems' => ['fact on should be a date written YYYY-MM-DD, not "soon"']} }
+
+      it 'still raises InvalidFacts' do
+        expect { client.run('bill', {on: 'soon'}) }.to raise_error(ReasonMeThis::InvalidFacts)
+      end
+    end
+
     it 'keeps every error under ReasonMeThis::Error' do
-      errors = %i[Unauthorized NotFound Gone InvalidFacts StepFailed Timeout Unreachable].map { |name| ReasonMeThis.const_get(name) }
+      errors = %i[Unauthorized NotFound Gone InvalidFacts InvalidRequest StepFailed Timeout Unreachable].map { |name| ReasonMeThis.const_get(name) }
 
       expect(errors).to all(be < ReasonMeThis::Error)
     end

@@ -23,6 +23,10 @@ module ReasonMeThis
     def message = "the facts have problems: #{problems.join('; ')}"
   end
 
+  class InvalidRequest < Refused
+    def message = problems.join('; ')
+  end
+
   class Rejected < Refused
     def message
       failed = "#{report[:failed]} cases failed" if report[:failed].to_i.positive?
