@@ -132,6 +132,7 @@ RSpec.describe ReasonMeThis::Client do
     {
       [401, {'error' => 'unauthorized'}] => [ReasonMeThis::Unauthorized, 'the service refused the API key'],
       [404, {'error' => 'no definition named bill'}] => [ReasonMeThis::NotFound, 'no definition named bill'],
+      [410, {'error' => 'bill version 2 is retired'}] => [ReasonMeThis::Gone, 'bill version 2 is retired'],
       [422, {'error' => 'divided by zero in rate'}] => [ReasonMeThis::StepFailed, 'divided by zero in rate'],
       [503, {'error' => 'the run took too long'}] => [ReasonMeThis::Timeout, 'the run took too long'],
       [500, {}] => [ReasonMeThis::Error, 'the service answered HTTP 500']
@@ -159,7 +160,7 @@ RSpec.describe ReasonMeThis::Client do
     end
 
     it 'keeps every error under ReasonMeThis::Error' do
-      errors = %i[Unauthorized NotFound InvalidFacts StepFailed Timeout Unreachable].map { |name| ReasonMeThis.const_get(name) }
+      errors = %i[Unauthorized NotFound Gone InvalidFacts StepFailed Timeout Unreachable].map { |name| ReasonMeThis.const_get(name) }
 
       expect(errors).to all(be < ReasonMeThis::Error)
     end

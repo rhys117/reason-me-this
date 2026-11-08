@@ -2,6 +2,7 @@ module ReasonMeThis
   class Error < StandardError; end
   class Unauthorized < Error; end
   class NotFound < Error; end
+  class Gone < Error; end
   class StepFailed < Error; end
   class Timeout < Error; end
   class Unreachable < Error; end

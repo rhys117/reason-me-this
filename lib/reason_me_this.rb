@@ -66,6 +66,7 @@ module ReasonMeThis
       case [status, answer]
       in [401, _] then Unauthorized.new('the service refused the API key')
       in [404, {error:}] then NotFound.new(error)
+      in [410, {error:}] then Gone.new(error)
       in [422, {problems:}] then invalid.new(answer)
       in [422, {error:}] then StepFailed.new(error)
       in [503, {error:}] then Timeout.new(error)
