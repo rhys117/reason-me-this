@@ -139,6 +139,7 @@ Every error is a `ReasonMeThis::Error`, with a message in plain words.
 | `NotFound` | no such definition or version (404) |
 | `Gone` | the version asked for is retired (410) |
 | `InvalidFacts` | the facts have problems (422); `#problems` lists them |
+| `InvalidRequest` | the service refused what was asked rather than the facts (422): a day that is not a date, both `version:` and `on:`, or a schema of a calculation it cannot give (the service marks these `refused: "request"`; an older one is read by its wording); the message is the service's |
 | `StepFailed` | a step failed while running (422); the message says which |
 | `Timeout` | the run took too long on the service (503) |
 | `Unreachable` | the service could not be reached: refused, DNS, or timed out |
