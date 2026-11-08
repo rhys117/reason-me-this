@@ -28,7 +28,8 @@ rmt run electricity_bill --facts facts.json  # a shipped blueprint, by name
 
 `check`, `test` and `run` on a file send its text to the service and save nothing. Exit codes: 0 success,
 1 a run failed, 2 problems, 3 a case failed, 64 usage, 69 the service could not be reached, 77 the key was
-refused. `rmt help` lists every command. `RMT_API_URL` points it at another service.
+refused. `rmt help` lists every command. `RMT_API_URL` points it at another service. `rmt` runs the live
+version or `--version N`; a schema, `on:` and publish's `effective_from:` and `live:` are in Ruby only.
 
 ## Configure
 
@@ -56,7 +57,7 @@ answer.to_h
 | Option | Means |
 | --- | --- |
 | `calculation:` | which calculation in the definition to run |
-| `version:` | a published version number, `"latest"` (the default) or `"draft"` |
+| `version:` | a published version number, `"latest"` (the default, the live version) or `"draft"` |
 | `on:` | a `Date`: run the version in effect that day, rather than the live one. Not with a version number |
 | `trace:` | `true` answers as `explain` does |
 
@@ -104,8 +105,10 @@ ReasonMeThis.push("bill", yaml: File.read("bill.yml"), cases: File.read("cases.y
 ReasonMeThis.publish("bill")        # => {version: 4, effective_from: Date(2026-11-08), live_version: 4}
 ReasonMeThis.publish("bill", effective_from: Date.new(2027, 1, 1), live: false)
 # => {version: 5, effective_from: Date(2027-01-01), live_version: 4}
-ReasonMeThis.definitions            # => [{name: "bill", published_version: 4, updated_at: "..."}]
-ReasonMeThis.definition("bill")     # => {name: "bill", yaml: "...", cases: "...", published_version: 4}
+ReasonMeThis.definitions
+# => [{name: "bill", published_version: 5, live_version: 4, live_pinned: true,
+#      versions: [{number: 1, effective_from: Date(2026-07-01), retired: false, published_at: Time(...)}, ...], updated_at: Time(...)}]
+ReasonMeThis.definition("bill")     # => {name: "bill", yaml: "...", cases: "...", published_version: 5, live_version: 4, ...}
 ```
 
 `publish` takes `effective_from:`, the day the new version takes effect (today by default), and `live: false`
