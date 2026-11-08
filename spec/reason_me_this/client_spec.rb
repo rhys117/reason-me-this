@@ -198,12 +198,23 @@ RSpec.describe ReasonMeThis::Client do
         let(:status) { 422 }
         let(:body) { {'problems' => [said]} }
 
-        it 'raises InvalidRequest saying what the service said' do
+        it 'raises InvalidRequest saying what the service said, from the wording when it does not mark refused' do
           expect { call.call(client) }.to raise_error(ReasonMeThis::InvalidRequest) do |error|
             expect(error.message).to eq(said)
             expect(error.problems).to eq([said])
           end
         end
+      end
+    end
+
+    context 'with a refusal the service marks as the request' do
+      let(:status) { 422 }
+      let(:body) { {'problems' => ['bill is a shipped blueprint with no versions, so on does not apply'], 'refused' => 'request'} }
+
+      it 'raises InvalidRequest whatever the problem says' do
+        expect { client.run('bill', {}, on: Date.new(2026, 7, 1)) }.to raise_error(
+          ReasonMeThis::InvalidRequest, 'bill is a shipped blueprint with no versions, so on does not apply'
+        )
       end
     end
 

@@ -28,7 +28,8 @@ module ReasonMeThis
   end
 
   class Client
-    # What the service says of a day, or of a version and a day, it was asked for (Day::Invalid in its API).
+    # What a service that does not yet mark refused: request says of a day, or of a version and a day, it was
+    # asked for (Day::Invalid in its API).
     REQUEST_PROBLEM = /\A(?:(?:on|effective_from) should be a date written YYYY-MM-DD, not |give version or on, not both\z)/
 
     def initialize(url: nil, api_key: nil, connection: Connection.new(url, api_key))
@@ -86,13 +87,18 @@ module ReasonMeThis
       in [401, _] then Unauthorized.new('the service refused the API key')
       in [404, {error:}] then NotFound.new(error)
       in [410, {error:}] then Gone.new(error)
-      in [422, {problems:}] then refused(problems, invalid).new(answer)
+      in [422, {problems:}] then refused(answer, invalid).new(answer)
       in [422, {error:}] then StepFailed.new(error)
       in [503, {error:}] then Timeout.new(error)
       else Error.new(["the service answered HTTP #{status}", answer[:error]].compact.join(': '))
       end
     end
 
-    def refused(problems, invalid) = problems.one? && problems.first.match?(REQUEST_PROBLEM) ? InvalidRequest : invalid
+    def refused(answer, invalid)
+      return InvalidRequest if answer[:refused] == 'request'
+
+      problems = answer[:problems]
+      problems.one? && problems.first.match?(REQUEST_PROBLEM) ? InvalidRequest : invalid
+    end
   end
 end
