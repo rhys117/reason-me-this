@@ -97,7 +97,7 @@ RSpec.describe ReasonMeThis::CLI do
       expect(json).to eq('problems' => ['give version or on, not both'])
     end
 
-    it 'sends a file no version or day' do
+    it 'sends a file with no version or day' do
       answers[[:post, '/try']] = [200, {'total' => '6'}]
 
       rmt('run', 'total.yml', '--version', '2', '--on', '2026-07-01', input: '{}')
