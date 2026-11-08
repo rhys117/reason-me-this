@@ -83,11 +83,63 @@ RSpec.describe ReasonMeThis::CLI do
       expect(out.string).to end_with("Sets off\n  large  total 6\n")
     end
 
+    it 'runs the version of a definition in effect on a day' do
+      answers[[:post, '/definitions/bill/run']] = [200, {'total' => '6'}]
+
+      expect(rmt('run', 'bill', '--on', '2026-07-01', input: '{}')).to eq(0)
+      expect(connection.requests.last.last).to eq(facts: {}, on: '2026-07-01')
+    end
+
+    it 'exits 1 with what the service said when given both a version and a day' do
+      answers[[:post, '/definitions/bill/run']] = [422, {'problems' => ['give version or on, not both']}]
+
+      expect(rmt('run', 'bill', '--version', '2', '--on', '2026-07-01', input: '{}')).to eq(1)
+      expect(json).to eq('problems' => ['give version or on, not both'])
+    end
+
+    it 'sends a file no version or day' do
+      answers[[:post, '/try']] = [200, {'total' => '6'}]
+
+      rmt('run', 'total.yml', '--version', '2', '--on', '2026-07-01', input: '{}')
+
+      expect(connection.requests.last.last).to eq(yaml: blueprint, facts: {})
+    end
+
     it 'exits 1 with the problems when the facts do not fit' do
       answers[[:post, '/try']] = [422, {'problems' => ['facts need units']}]
 
       expect(rmt('run', 'total.yml', input: '{}')).to eq(1)
       expect(json).to eq('problems' => ['facts need units'])
+    end
+  end
+
+  describe 'schema' do
+    def schema = {'calculation' => 'total', 'version' => 3, 'inputs' => {'$schema' => 'https://json-schema.org/draft/2020-12/schema'}, 'outputs' => {}}
+
+    it "prints a definition's JSON Schemas as JSON, even at a terminal" do
+      answers[[:get, '/definitions/total/schema']] = [200, schema]
+
+      expect(rmt('schema', 'total', '--text')).to eq(0)
+      expect(json).to eq(schema)
+    end
+
+    it 'asks for a calculation of a version, or the version in effect on a day' do
+      answers[[:get, '/definitions/total/schema?calculation=year&version=draft']] = [200, schema]
+      answers[[:get, '/definitions/total/schema?on=2026-07-01']] = [200, schema]
+
+      rmt('schema', 'total', '--calculation', 'year', '--version', 'draft')
+      rmt('schema', 'total', '--on', '2026-07-01')
+
+      expect(connection.requests.map { |request| request[1] }).to eq(
+        ['/definitions/total/schema?calculation=year&version=draft', '/definitions/total/schema?on=2026-07-01']
+      )
+    end
+
+    it 'exits 1 when the service has no such definition' do
+      answers[[:get, '/definitions/nope/schema']] = [404, {'error' => 'no definition named nope'}]
+
+      expect(rmt('schema', 'nope')).to eq(1)
+      expect(json).to eq('error' => 'no definition named nope')
     end
   end
 
@@ -105,6 +157,29 @@ RSpec.describe ReasonMeThis::CLI do
 
       expect(rmt('publish', 'total', '--text')).to eq(0)
       expect(out.string).to include('Published total v4')
+    end
+
+    it 'publishes to take effect on a day and leaves the live version live' do
+      answers[[:post, '/definitions/total/publish']] = [201, {'version' => 4, 'effective_from' => '2026-12-01', 'live_version' => 3}]
+
+      expect(rmt('publish', 'total', '--effective-from', '2026-12-01', '--no-live', '--text')).to eq(0)
+      expect(connection.requests.last.last).to eq(effective_from: '2026-12-01', live: false)
+      expect(out.string).to include('Published total v4, in effect from 2026-12-01; v3 is live')
+    end
+
+    it 'publishes with no body when given no options' do
+      answers[[:post, '/definitions/total/publish']] = [201, {'version' => 4, 'effective_from' => '2026-11-08', 'live_version' => 4}]
+
+      rmt('publish', 'total', '--text')
+
+      expect(connection.requests.last.last).to be_nil
+      expect(out.string).to eq("✓ Published total v4\n")
+    end
+
+    it 'exits 2 when the day to publish from is not a date' do
+      answers[[:post, '/definitions/total/publish']] = [422, {'problems' => ['effective_from should be a date written YYYY-MM-DD, not "monday"']}]
+
+      expect(rmt('publish', 'total', '--effective-from', 'monday')).to eq(2)
     end
 
     it 'lists the definitions' do
