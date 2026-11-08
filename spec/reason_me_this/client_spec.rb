@@ -21,6 +21,12 @@ RSpec.describe ReasonMeThis::Client do
       expect(connection.requests.last).to eq([:post, '/definitions/sales_commission/run', {facts: {}, version: 3}])
     end
 
+    it 'runs the version in effect on a day' do
+      client.run('sales_commission', {}, on: Date.new(2026, 7, 1))
+
+      expect(connection.requests.last.last).to eq(facts: {}, on: Date.new(2026, 7, 1))
+    end
+
     it 'runs the version asked for, which wins over a pinned name' do
       client.run('sales_commission@3', {}, version: 'draft')
 
@@ -87,11 +93,17 @@ RSpec.describe ReasonMeThis::Client do
 
   describe '#publish' do
     let(:status) { 201 }
-    let(:body) { {'version' => 4} }
+    let(:body) { {'version' => 4, 'effective_from' => '2026-11-08', 'live_version' => 4} }
 
-    it 'publishes the draft and answers its version number' do
-      expect(client.publish('bill')).to eq(4)
+    it 'publishes the draft and answers its version, the day it takes effect and the live version' do
+      expect(client.publish('bill')).to eq(version: 4, effective_from: Date.new(2026, 11, 8), live_version: 4)
       expect(connection.requests).to eq([[:post, '/definitions/bill/publish', nil]])
+    end
+
+    it 'publishes to take effect on a day, keeping the live version live when asked' do
+      client.publish('bill', effective_from: Date.new(2026, 12, 1), live: false)
+
+      expect(connection.requests.last.last).to eq(effective_from: Date.new(2026, 12, 1), live: false)
     end
 
     context 'when a case fails' do
@@ -104,11 +116,33 @@ RSpec.describe ReasonMeThis::Client do
     end
   end
 
+  describe '#schema' do
+    let(:body) do
+      {'calculation' => 'bill', 'version' => 3,
+       'inputs' => {'$schema' => 'https://json-schema.org/draft/2020-12/schema', 'properties' => {'plan' => {'enum' => %w[1042 2026-07-01]}}},
+       'outputs' => {'properties' => {'total' => {'type' => %w[string number]}}}}
+    end
+
+    it 'answers the JSON Schemas as the service sent them, for a JSON Schema validator' do
+      expect(client.schema('bill')).to eq(body)
+      expect(connection.requests).to eq([[:get, '/definitions/bill/schema', nil]])
+    end
+
+    it 'asks for a calculation of a pinned or given version, or the one in effect on a day' do
+      client.schema('bill@3', calculation: :year)
+      client.schema('bill', on: Date.new(2026, 7, 1))
+
+      expect(connection.requests.map { |request| request[1] }).to eq(
+        ['/definitions/bill/schema?calculation=year&version=3', '/definitions/bill/schema?on=2026-07-01']
+      )
+    end
+  end
+
   describe '#definitions' do
     let(:body) { {'definitions' => [{'name' => 'bill', 'published_version' => 3, 'updated_at' => '2026-11-04T10:00:00Z'}]} }
 
     it 'lists the definitions on the service' do
-      expect(client.definitions).to eq([{name: 'bill', published_version: 3, updated_at: '2026-11-04T10:00:00Z'}])
+      expect(client.definitions).to eq([{name: 'bill', published_version: 3, updated_at: Time.utc(2026, 11, 4, 10)}])
       expect(connection.requests).to eq([[:get, '/definitions', nil]])
     end
   end
@@ -126,6 +160,7 @@ RSpec.describe ReasonMeThis::Client do
     {
       [401, {'error' => 'unauthorized'}] => [ReasonMeThis::Unauthorized, 'the service refused the API key'],
       [404, {'error' => 'no definition named bill'}] => [ReasonMeThis::NotFound, 'no definition named bill'],
+      [410, {'error' => 'bill version 2 is retired'}] => [ReasonMeThis::Gone, 'bill version 2 is retired'],
       [422, {'error' => 'divided by zero in rate'}] => [ReasonMeThis::StepFailed, 'divided by zero in rate'],
       [503, {'error' => 'the run took too long'}] => [ReasonMeThis::Timeout, 'the run took too long'],
       [500, {}] => [ReasonMeThis::Error, 'the service answered HTTP 500']
@@ -153,7 +188,7 @@ RSpec.describe ReasonMeThis::Client do
     end
 
     it 'keeps every error under ReasonMeThis::Error' do
-      errors = %i[Unauthorized NotFound InvalidFacts StepFailed Timeout Unreachable].map { |name| ReasonMeThis.const_get(name) }
+      errors = %i[Unauthorized NotFound Gone InvalidFacts StepFailed Timeout Unreachable].map { |name| ReasonMeThis.const_get(name) }
 
       expect(errors).to all(be < ReasonMeThis::Error)
     end

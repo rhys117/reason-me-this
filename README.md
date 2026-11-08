@@ -57,6 +57,7 @@ answer.to_h
 | --- | --- |
 | `calculation:` | which calculation in the definition to run |
 | `version:` | a published version number, `"latest"` (the default) or `"draft"` |
+| `on:` | a `Date`: run the version in effect that day, rather than the live one. Not with a version number |
 | `trace:` | `true` answers as `explain` does |
 
 `"sales_commission@3"` pins the name to published version 3. A `version:` given as well wins over the pin.
@@ -69,6 +70,7 @@ The service sends numbers as strings so they stay exact. An answer reads them ba
 | --- | --- |
 | `"55830"`, `"0.8"`, `"-12.5"` | `BigDecimal` |
 | `"2026-07-01"` | `Date` |
+| `"2026-11-02T16:00:00+11:00"`, `"2026-11-02T05:00:00Z"` | `Time`, keeping its offset |
 | any other string, number, `true`, `false`, `null` | as sent |
 | an object | a hash with symbol keys, its values read the same way |
 
@@ -99,10 +101,30 @@ them; a plain `run` answers the outputs alone.
 ReasonMeThis.push("bill", yaml: File.read("bill.yml"), cases: File.read("cases.yml"))
 # => {problems: [], passed: 4, failed: 0, cases: [...]}
 
-ReasonMeThis.publish("bill")        # => 4, the new version
+ReasonMeThis.publish("bill")        # => {version: 4, effective_from: Date(2026-11-08), live_version: 4}
+ReasonMeThis.publish("bill", effective_from: Date.new(2027, 1, 1), live: false)
+# => {version: 5, effective_from: Date(2027-01-01), live_version: 4}
 ReasonMeThis.definitions            # => [{name: "bill", published_version: 4, updated_at: "..."}]
 ReasonMeThis.definition("bill")     # => {name: "bill", yaml: "...", cases: "...", published_version: 4}
 ```
+
+`publish` takes `effective_from:`, the day the new version takes effect (today by default), and `live: false`
+to leave the version that is live now live, so the new one waits until it is made live on the service.
+It answers what the service does: the new version, the day it takes effect and the live version. It used
+to answer the version number alone; read that as `publish("bill")[:version]`.
+
+## Schema
+
+```ruby
+schema = ReasonMeThis.schema("bill", calculation: :invoice)   # also version: 3, "bill@3" or on: Date
+schema["inputs"]    # a JSON Schema (draft 2020-12) of the facts: types, enum, default, required
+schema["outputs"]   # a JSON Schema of the outputs, with the types the blueprint declares
+schema["version"]   # the version it describes
+```
+
+The schemas come back as the service sent them, with string keys (`"$schema"`) and no values read as
+numbers or dates, so they can go straight to a JSON Schema validator. They describe the JSON: a number fact
+is a JSON number and a number output exact text, as the service sends it.
 
 ## Errors
 
@@ -112,6 +134,7 @@ Every error is a `ReasonMeThis::Error`, with a message in plain words.
 | --- | --- |
 | `Unauthorized` | the service refused the API key (401) |
 | `NotFound` | no such definition or version (404) |
+| `Gone` | the version asked for is retired (410) |
 | `InvalidFacts` | the facts have problems (422); `#problems` lists them |
 | `StepFailed` | a step failed while running (422); the message says which |
 | `Timeout` | the run took too long on the service (503) |
