@@ -7,6 +7,7 @@ module ReasonMeThis
   module Values
     NUMBER = /\A-?\d+(\.\d+)?\z/
     DATE = /\A\d{4}-\d{2}-\d{2}\z/
+    TIME = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\z/
 
     module_function
 
@@ -15,6 +16,7 @@ module ReasonMeThis
         case leaf
         when NUMBER then BigDecimal(leaf)
         when DATE then date(leaf)
+        when TIME then time(leaf)
         else leaf
         end
       end
@@ -44,6 +46,12 @@ module ReasonMeThis
     def date(text)
       Date.iso8601(text)
     rescue Date::Error
+      text
+    end
+
+    def time(text)
+      Time.iso8601(text)
+    rescue ArgumentError
       text
     end
 

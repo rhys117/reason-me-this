@@ -9,6 +9,17 @@ RSpec.describe ReasonMeThis::Answer do
                               by_quarter: [{start: Date.new(2026, 1, 1), payout: BigDecimal('5000')}], version: 3)
   end
 
+  it 'reads ISO 8601 date-times with an offset as times that keep it' do
+    started = described_class.new('started' => '2026-11-02T16:00:00+11:00')[:started]
+
+    expect([started, started.utc_offset]).to eq([Time.new(2026, 11, 2, 16, 0, 0, '+11:00'), 39_600])
+    expect(described_class.new('at' => '2026-11-02T05:00:00Z')[:at]).to eq(Time.utc(2026, 11, 2, 5))
+  end
+
+  it 'keeps a string shaped like a time that is not one' do
+    expect(described_class.new('at' => '2026-11-02T25:00:00Z')[:at]).to eq('2026-11-02T25:00:00Z')
+  end
+
   it 'keeps a string shaped like a date that is not one' do
     expect(described_class.new('code' => '2026-13-45')[:code]).to eq('2026-13-45')
   end

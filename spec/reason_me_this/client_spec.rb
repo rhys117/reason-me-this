@@ -114,7 +114,7 @@ RSpec.describe ReasonMeThis::Client do
     let(:body) { {'definitions' => [{'name' => 'bill', 'published_version' => 3, 'updated_at' => '2026-11-04T10:00:00Z'}]} }
 
     it 'lists the definitions on the service' do
-      expect(client.definitions).to eq([{name: 'bill', published_version: 3, updated_at: '2026-11-04T10:00:00Z'}])
+      expect(client.definitions).to eq([{name: 'bill', published_version: 3, updated_at: Time.utc(2026, 11, 4, 10)}])
       expect(connection.requests).to eq([[:get, '/definitions', nil]])
     end
   end
