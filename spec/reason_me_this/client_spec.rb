@@ -93,11 +93,17 @@ RSpec.describe ReasonMeThis::Client do
 
   describe '#publish' do
     let(:status) { 201 }
-    let(:body) { {'version' => 4} }
+    let(:body) { {'version' => 4, 'effective_from' => '2026-11-08', 'live_version' => 4} }
 
-    it 'publishes the draft and answers its version number' do
-      expect(client.publish('bill')).to eq(4)
+    it 'publishes the draft and answers its version, the day it takes effect and the live version' do
+      expect(client.publish('bill')).to eq(version: 4, effective_from: Date.new(2026, 11, 8), live_version: 4)
       expect(connection.requests).to eq([[:post, '/definitions/bill/publish', nil]])
+    end
+
+    it 'publishes to take effect on a day, keeping the live version live when asked' do
+      client.publish('bill', effective_from: Date.new(2026, 12, 1), live: false)
+
+      expect(connection.requests.last.last).to eq(effective_from: Date.new(2026, 12, 1), live: false)
     end
 
     context 'when a case fails' do

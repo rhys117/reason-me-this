@@ -46,7 +46,11 @@ module ReasonMeThis
 
     def push(name, yaml:, cases: '') = request(:put, at(name), {yaml:, cases:}, invalid: Rejected)
 
-    def publish(name) = request(:post, at(name, :publish), invalid: Rejected)[:version]
+    # live: false leaves the version that is live now live, so the new one waits.
+    def publish(name, effective_from: nil, live: nil)
+      body = {effective_from:, live:}.compact
+      request(:post, at(name, :publish), (body unless body.empty?), invalid: Rejected)
+    end
 
     def definitions = request(:get, '/definitions')[:definitions]
 
