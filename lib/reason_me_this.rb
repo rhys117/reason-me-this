@@ -33,8 +33,7 @@ module ReasonMeThis
     end
 
     def run(name, facts, calculation: nil, version: nil, on: nil, trace: false) # rubocop:disable Metrics/ParameterLists
-      name, pinned = name.to_s.split('@', 2)
-      version ||= pinned&.match?(/\A\d+\z/) ? Integer(pinned) : pinned
+      name, version = pinned(name, version)
       answer = request(:post, at(name, :run), {facts:, calculation:, version:, on:, trace: (true if trace)}.compact)
       return Answer.new(answer) unless trace
 
@@ -59,6 +58,11 @@ module ReasonMeThis
     private
 
     def at(name, *action) = ['/definitions', name, *action].join('/')
+
+    def pinned(name, version)
+      name, pin = name.to_s.split('@', 2)
+      [name, version || (pin&.match?(/\A\d+\z/) ? Integer(pin) : pin)]
+    end
 
     def request(method, path, body = nil, invalid: InvalidFacts)
       status, answer = @connection.request(method, path, body)
