@@ -8,6 +8,8 @@ module ReasonMeThis
   class CLI
     HOSTED = 'https://reason-me-this.com/api'.freeze
     KEYS = 'https://reason-me-this.com/app/api_keys'.freeze
+    SKILLS = '.claude/skills'.freeze
+    PLAIN = /\A(?!\.+\z)[\w.-]+\z/
 
     USAGE = <<~TEXT.freeze
       Usage: rmt COMMAND [arguments] [options]
@@ -19,6 +21,11 @@ module ReasonMeThis
         test BLUEPRINT CASES                    run each case's facts and compare the expected outputs
         run BLUEPRINT [--facts FILE] [--calculation NAME] [--trace]
                                                 run a blueprint file; facts come from FILE or standard input
+
+      Skills for an agent:
+        skills                                  list the skills the service offers an agent
+        skills install [--dir DIR] [--force]    write them into DIR (.claude/skills by default), replacing
+                                                files already there only with --force
 
       Publish and run definitions:
         push NAME BLUEPRINT [CASES]             save a definition's draft, checked and tested
@@ -34,7 +41,7 @@ module ReasonMeThis
       A BLUEPRINT ending in .yml or .yaml or containing a / is a file; anything else is a name.
       --on YYYY-MM-DD picks the version in effect that day. publish --effective-from makes the new version take
       effect on that day (today by default); --no-live keeps the version that is live now live, so the new one waits.
-      Every command but guide and describe needs RMT_API_KEY (create one at #{KEYS}).
+      Every command but guide, describe and skills needs RMT_API_KEY (create one at #{KEYS}).
       RMT_API_URL defaults to #{HOSTED}.
 
       Options for any command:
@@ -111,6 +118,7 @@ module ReasonMeThis
     def dispatch(command, argv)
       case command
       when 'guide', 'describe', 'list' then send(command)
+      when 'skills' then skills(argv)
       when 'check', 'test', 'run', 'schema', 'push', 'publish', 'pull' then argv.first ? send(command, argv) : usage
       else usage
       end
@@ -130,6 +138,33 @@ module ReasonMeThis
 
     def describe
       on_service(:get, '/describe', keyless: true) { |_status, answer| answered(:describe, answer.except('guide'), 0) }
+    end
+
+    def skills(argv)
+      options = {dir: SKILLS, force: false}
+      OptionParser.new do |parser|
+        parser.on('--dir DIR') { |dir| options[:dir] = dir }
+        parser.on('--force') { options[:force] = true }
+      end.parse!(argv)
+      return usage unless argv.empty? || argv == ['install']
+
+      on_service(:get, '/skills', keyless: true) do |_status, answer|
+        next install(answer['skills'], **options) if argv.any?
+
+        answered(:skills, {'skills' => answer['skills'].map { |skill| skill.slice('name', 'description') }}, 0)
+      end
+    end
+
+    def install(skills, dir:, force:)
+      files = skills.flat_map { |skill| skill['files'].map { |path, content| [File.join(skill['name'], path), content] } }.to_h
+      unsafe = files.keys.reject { |path| path.split('/').all?(PLAIN) }
+      if unsafe.any?
+        return answered(:problems, {'problems' => unsafe.map do |path|
+          "#{path} is not a path inside its skill's folder, so nothing was written"
+        end}, 1)
+      end
+
+      write_new(files.transform_keys { |path| File.join(dir, path) }, force:)
     end
 
     def check(argv)
@@ -230,8 +265,8 @@ module ReasonMeThis
       end
     end
 
-    def write_new(files)
-      existing = files.keys.select { |path| File.exist?(path) }
+    def write_new(files, force: false)
+      existing = force ? [] : files.keys.select { |path| File.exist?(path) }
       return answered(:problems, {'problems' => existing.map { |path| "#{path} already exists" }}, 1) if existing.any?
 
       files.each do |path, content|
