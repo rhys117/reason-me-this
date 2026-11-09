@@ -100,6 +100,8 @@ module ReasonMeThis
 
         def created(answer) = answer[:created].map { |path| "Wrote #{path}" }.join("\n")
 
+        def skills(answer) = answer[:skills].map { |skill| "#{bold(skill[:name])}\n  #{skill[:description]}" }.join("\n")
+
         def describe(answer)
           types = answer[:steps].map { |name, type| "  #{name.to_s.ljust(10)} #{type[:purpose]}" }
           functions = answer[:formulas][:usage].map { |_name, usage| "  #{usage}" }

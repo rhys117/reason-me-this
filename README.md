@@ -29,6 +29,11 @@ rmt schema bill --calculation bill           # JSON Schemas of its facts and out
 rmt run electricity_bill --facts facts.json  # a shipped blueprint, by name
 ```
 
+`rmt skills install` writes the service's skills into `.claude/skills` (or `--dir DIR`), so an agent such
+as Claude Code learns to build apps and pages on the service locally: each skill is a `SKILL.md` and the
+files it uses, such as a page template. It needs no key, never replaces a file already there unless given
+`--force`, and refuses a skill whose files would land outside its own folder. `rmt skills` lists them.
+
 `check`, `test` and `run` on a file send its text to the service and save nothing. Exit codes: 0 success,
 1 a run failed or no such definition or version, 2 problems, 3 a case failed, 64 usage, 69 the service could
 not be reached, 77 the key was refused. `rmt help` lists every command. `RMT_API_URL` points it at another

@@ -220,6 +220,57 @@ RSpec.describe ReasonMeThis::CLI do
     end
   end
 
+  describe 'skills' do
+    def skill
+      {'name' => 'app-page', 'description' => 'Build a page for an app',
+       'files' => {'SKILL.md' => "---\nname: app-page\n---\n", 'assets/template.html' => '<html></html>'}}
+    end
+
+    before { answers[[:get, '/skills']] = [200, {'skills' => [skill]}] }
+
+    it 'lists the skills the service offers, without a key' do
+      expect(rmt('skills', '--text', env: {})).to eq(0)
+      expect(out.string).to include('app-page', 'Build a page for an app')
+    end
+
+    it 'lists only their names and descriptions in JSON, not their files' do
+      expect(rmt('skills', '--json', env: {})).to eq(0)
+      expect(json).to eq('skills' => [{'name' => 'app-page', 'description' => 'Build a page for an app'}])
+    end
+
+    it 'installs every skill into .claude/skills, without a key' do
+      expect(rmt('skills', 'install', env: {})).to eq(0)
+      expect(File.read('.claude/skills/app-page/SKILL.md')).to eq("---\nname: app-page\n---\n")
+      expect(File.read('.claude/skills/app-page/assets/template.html')).to eq('<html></html>')
+      expect(json['created']).to include('.claude/skills/app-page/SKILL.md')
+    end
+
+    it 'installs into another folder, and replaces what is there only when forced' do
+      expect(rmt('skills', 'install', '--dir', 'agent/skills', env: {})).to eq(0)
+      File.write('agent/skills/app-page/SKILL.md', 'changed here')
+
+      expect(rmt('skills', 'install', '--dir', 'agent/skills', env: {})).to eq(1)
+      expect(File.read('agent/skills/app-page/SKILL.md')).to eq('changed here')
+      expect(rmt('skills', 'install', '--dir', 'agent/skills', '--force', env: {})).to eq(0)
+      expect(File.read('agent/skills/app-page/SKILL.md')).to eq("---\nname: app-page\n---\n")
+    end
+
+    it 'writes nothing when a skill names a path outside its own folder' do
+      answers[[:get, '/skills']] = [200, {'skills' => [skill.merge('files' => {'../../escape.md' => 'x', 'SKILL.md' => 'y'})]}]
+
+      expect(rmt('skills', 'install', env: {})).to eq(1)
+      expect(json['problems'].first).to include('../../escape.md')
+      expect(Dir.exist?('.claude')).to be(false)
+    end
+
+    it 'writes nothing when a skill has a name that is not a plain folder name' do
+      answers[[:get, '/skills']] = [200, {'skills' => [skill.merge('name' => '../up')]}]
+
+      expect(rmt('skills', 'install', env: {})).to eq(1)
+      expect(Dir.exist?('.claude')).to be(false)
+    end
+  end
+
   describe 'exit codes' do
     it 'exits 64 and says where to get a key when a command needs one and none is set' do
       expect(rmt('check', 'total.yml', env: {})).to eq(64)
