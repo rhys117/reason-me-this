@@ -14,8 +14,8 @@ RSpec.describe ReasonMeThis::Blueprint do
     expect(read(ROOM_HIRE.yaml)).to eq(ROOM_HIRE.to_h)
   end
 
-  it 'writes decimals exactly, dates as dates, and a value used twice in full both times' do
-    row = {from: Date.new(2026, 7, 1), rate: BigDecimal('0.1000000000000000000001'), on: 'yes'}
+  it 'writes decimals exactly, dates as dates, times as ISO 8601 text, and a value used twice in full both times' do
+    row = {from: Date.new(2026, 7, 1), opens: Time.new(2026, 7, 1, 9, 0, 0, '+10:00'), rate: BigDecimal('0.1000000000000000000001'), on: 'yes'}
     blueprint = described_class.define do
       table :rates, [row, row]
       calculation(:rate) { outputs :rates }
@@ -25,9 +25,11 @@ RSpec.describe ReasonMeThis::Blueprint do
       tables:
         rates:
         - from: 2026-07-01
+          opens: '2026-07-01T09:00:00+10:00'
           rate: 0.1000000000000000000001
           'on': 'yes'
         - from: 2026-07-01
+          opens: '2026-07-01T09:00:00+10:00'
           rate: 0.1000000000000000000001
           'on': 'yes'
       calculations:

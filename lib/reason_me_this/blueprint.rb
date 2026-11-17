@@ -1,5 +1,6 @@
 # typed: strict
 
+require 'time'
 require 'reason_me_this/blueprint/fields'
 require 'reason_me_this/blueprint/rules'
 require 'reason_me_this/blueprint/step'
@@ -16,13 +17,14 @@ module ReasonMeThis
       blueprint
     end
 
-    # The document with text for every name.
+    # The document with text for every name, and a time as the ISO 8601 text a blueprint file holds one as.
     #: (untyped) -> untyped
     def self.plain(value)
       case value
       when Hash then value.to_h { |key, held| [key.to_s, plain(held)] }
       when Array then value.map { |held| plain(held) }
       when Symbol then value.to_s
+      when Time then value.iso8601
       else value
       end
     end
