@@ -28,6 +28,9 @@ echo '{"plan": "flat_rate"}' | rmt run bill --trace
 echo '{"plan": "flat_rate"}' | rmt run bill --on 2026-07-01
 rmt schema bill --calculation bill           # JSON Schemas of its facts and outputs
 rmt run electricity_bill --facts facts.json  # a shipped blueprint, by name
+rmt ruby bill.yml                            # write bill.rb, the same blueprint in Ruby
+rmt pull bill --ruby                         # bill/blueprint.rb in place of blueprint.yml
+rmt check bill.rb && rmt push bill bill.rb   # a .rb file is run and sent as the YAML it builds
 ```
 
 `check`, `test` and `run` on a file send its text to the service and save nothing. Exit codes: 0 success,
@@ -165,7 +168,8 @@ ROOM_HIRE.to_h                                          # the document, with tex
 
 - Names are symbols, and formulas and conditions are text, or a plain number or true or false.
 - An input is written by its type: `number`, `string`, `date`, `time`, `boolean` or `list`, with `default:`,
-  `optional:` and, on a number or a string, `one_of:`. A block on a `list` gives the fields of each row.
+  `optional:` and, on a number or a string, `one_of:`. A block on a `list` gives the fields of each row. `input :name,
+  :type, key: value` writes an input of any other type or with any other key.
 - A step is written by its type, name first: `formula`, `rules`, `lookup`, `decide`, `run`, `repeat`, `sum`,
   `group`, `compare` and `slice`, each taking the keys the blueprint format gives it. `step :name, :type, spec`
   writes a step of any other type.
@@ -175,6 +179,17 @@ ROOM_HIRE.to_h                                          # the document, with tex
   The first calculation is the default.
 - The service or the engine still does the checking: a formula that cannot be read or a name that does not
   exist is a problem reported by `push`, or raised when a local engine runs it.
+
+### From YAML, and with rmt
+
+`rmt ruby bill.yml` writes `bill.rb` beside it, and `rmt pull bill --ruby` pulls a definition as
+`bill/blueprint.rb`. The Ruby builds the same document the YAML holds, with a method for each input and
+step; one that no method can say, such as a custom step, is written with `step` or `input`, so nothing is
+lost. Comments in the YAML are not carried over. In Ruby it is
+`ReasonMeThis::Blueprint::Ruby.write(ReasonMeThis::Blueprint::Yaml.read(yaml), "bill")`.
+
+Wherever `rmt` takes a blueprint file it takes a `.rb` one: `check`, `test`, `run` and `push` run the file
+and send the YAML of the `ReasonMeThis::Blueprint` it ends with.
 
 ### With Sorbet
 
