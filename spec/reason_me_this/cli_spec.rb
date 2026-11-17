@@ -198,6 +198,71 @@ RSpec.describe ReasonMeThis::CLI do
     end
   end
 
+  describe 'blueprints in Ruby' do
+    def ruby
+      <<~RUBY
+        # typed: strict
+
+        TOTAL = ReasonMeThis::Blueprint.define do
+          calculation :total do
+            inputs do
+              number :units
+            end
+
+            formula :total, 'units * 3'
+
+            outputs :total
+          end
+        end #: ReasonMeThis::Blueprint
+      RUBY
+    end
+
+    def sent = ReasonMeThis::Blueprint::Yaml.read(connection.requests.last.last[:yaml])
+
+    it 'writes a blueprint file as Ruby beside it, and will not overwrite it' do
+      expect(rmt('ruby', 'total.yml')).to eq(0)
+      expect(File.read('total.rb')).to eq(ruby)
+      expect(json).to eq('created' => ['total.rb'])
+      expect(rmt('ruby', 'total.yml')).to eq(1)
+    end
+
+    it 'pulls a definition as Ruby' do
+      answers[[:get, '/definitions/total']] = [200, {'yaml' => blueprint, 'cases' => ''}]
+
+      expect(rmt('pull', 'total', '--ruby')).to eq(0)
+      expect(File.read('total/blueprint.rb')).to eq(ruby)
+      expect(File.exist?('total/blueprint.yml')).to be(false)
+    end
+
+    it 'checks, tests, runs and pushes a Ruby file as the YAML it builds' do
+      File.write('total.rb', ruby)
+      answers[[:post, '/check']] = [200, {'problems' => [], 'passed' => 1, 'failed' => 0, 'cases' => []}]
+      answers[[:post, '/try']] = [200, {'total' => 6}]
+      answers[[:put, '/definitions/total']] = [200, {'problems' => [], 'passed' => 1, 'failed' => 0, 'cases' => []}]
+
+      codes = [rmt('check', 'total.rb'), rmt('test', 'total.rb', 'cases.yml'), rmt('run', 'total.rb', input: '{"units": 2}'),
+               rmt('push', 'total', 'total.rb', 'cases.yml')]
+
+      expect(codes).to eq([0, 0, 0, 0])
+      expect(connection.requests.map { |_method, path, _body| path }).to eq(['/check', '/check', '/try', '/definitions/total'])
+      expect(connection.requests.map { |*, body| ReasonMeThis::Blueprint::Yaml.read(body[:yaml]) }.uniq).to eq([sent])
+      expect(sent).to eq(ReasonMeThis::Blueprint::Yaml.read(blueprint))
+    end
+
+    it 'exits 2 with the problem when a Ruby file does not run, does not end with a blueprint, or a file cannot be written as Ruby' do
+      File.write('broken.rb', 'ReasonMeThis::Blueprint.define { calculation(:total) { formulae :total, 1 } }')
+      File.write('other.rb', '1 + 1')
+      File.write('odd.yml', "version: 2\ncalculations: {}\n")
+      File.write('bad.yml', 'calculations: {')
+
+      expect(%w[broken.rb other.rb].map { |file| rmt('check', file) } + %w[odd.yml bad.yml].map { |file| rmt('ruby', file) }).to eq([2, 2, 2, 2])
+      expect(out.string).to include("broken.rb could not be run: NoMethodError: undefined method 'formulae'",
+                                    'other.rb should end with the blueprint it builds, a ReasonMeThis::Blueprint, not 2',
+                                    'a blueprint has version, which cannot be written in Ruby', 'The blueprint is not valid YAML')
+      expect(connection.requests).to eq([])
+    end
+  end
+
   describe 'describe and guide' do
     def catalogue
       {'steps' => {'formula' => {'purpose' => 'work out a value', 'example' => '- name: x'}}, 'input_types' => {}, 'input_options' => {},

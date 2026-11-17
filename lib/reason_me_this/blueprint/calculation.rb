@@ -54,8 +54,8 @@ module ReasonMeThis
       #: (Symbol, Symbol, of: Symbol) -> Step
       def sum(name, output, of:) = step(name, :sum, {output:, of:})
 
-      #: (Symbol, of: Symbol, by: Array[Symbol], ?sum: Array[Symbol]) -> Step
-      def group(name, of:, by:, sum: []) = step(name, :group, {of:, by:, sum:})
+      #: (Symbol, of: Symbol, by: Array[Symbol], ?sum: Array[Symbol]?) -> Step
+      def group(name, of:, by:, sum: nil) = step(name, :group, {of:, by:, sum:}.compact)
 
       #: (Symbol, Array[Symbol], ?pick: Symbol) -> Step
       def compare(name, steps, pick: :highest) = step(name, :compare, {steps:, pick:})
@@ -93,7 +93,7 @@ module ReasonMeThis
 
       #: -> Hash[Symbol, untyped]
       def to_h
-        {inputs: @inputs.to_h, steps: @steps.map(&:to_h), outputs: @outputs, events: @events}.reject { |_key, held| held.empty? }
+        {inputs: @inputs.to_h, steps: @steps.map(&:to_h), outputs: @outputs, events: @events}.reject { |key, held| key != :steps && held.empty? }
       end
     end
   end

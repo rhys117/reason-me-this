@@ -32,15 +32,19 @@ module ReasonMeThis
         field(name, :list, default:, optional:, of: (row.to_h if block))
       end
 
+      # An input of a type, or with a key, this gem has no method for.
+      #: (Symbol, Symbol, **untyped) -> void
+      def input(name, type, **keys)
+        @fields[name] = {type:, **keys}
+      end
+
       #: -> Hash[Symbol, Hash[Symbol, untyped]]
       def to_h = @fields
 
       private
 
       #: (Symbol, Symbol, **untyped) -> void
-      def field(name, type, **keys)
-        @fields[name] = {type:, **keys.compact.reject { |key, held| key == :optional && !held }}
-      end
+      def field(name, type, **keys) = input(name, type, **keys.compact.reject { |key, held| key == :optional && !held })
     end
   end
 end

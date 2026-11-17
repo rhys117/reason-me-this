@@ -10,7 +10,7 @@ module ReasonMeThis
       end
 
       # A rule without a value gives its name.
-      #: (Symbol, String, ?value: (String | Numeric | bool)?) -> void
+      #: (Symbol, String | bool, ?value: (String | Numeric | bool)?) -> void
       def rule(name, condition, value: nil)
         @rules << {name:, when: condition, value:}.compact
       end
