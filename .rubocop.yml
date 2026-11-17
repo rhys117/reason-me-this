@@ -95,6 +95,9 @@ Metrics/BlockLength:
 Metrics/ClassLength:
   Enabled: false
 
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+
 Metrics/MethodLength:
   Max: 40
 

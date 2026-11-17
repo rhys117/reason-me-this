@@ -1,6 +1,7 @@
 # typed: strict
 
 require 'reason_me_this/blueprint/fields'
+require 'reason_me_this/blueprint/rules'
 require 'reason_me_this/blueprint/step'
 require 'reason_me_this/blueprint/calculation'
 
