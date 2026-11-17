@@ -24,8 +24,14 @@ separately.
 
 ## Boundaries
 
-- Zero runtime dependencies beyond the standard library (`net/http`, `json`, `bigdecimal`). Never depend on
-  the `reckoning` engine gem; this gem only speaks HTTP.
+- Zero runtime dependencies beyond the standard library (`net/http`, `json`, `bigdecimal`). Never add the
+  engine's gems to the gemspec or the default `Gemfile`: they are licensed separately and may not be
+  installed.
+- Nothing here names the engine or calls it: not code, prose, specs or tracked gemfiles. A client given an
+  `engine` requires `reason_me_this/engines/NAME`, a file the engine's own package provides, which registers
+  a connection with `ReasonMeThis::Engines` that answers as the service would. The specs tagged `:engine`
+  are that connection's contract and run with `BUNDLE_GEMFILE=gemfiles/engine.gemfile`, an untracked
+  gemfile of your own that adds the engine; run both bundles before committing.
 - The service's HTTP contract is fixed: the client adapts to it, never the other way.
 - Numbers stay exact both ways: a `BigDecimal` fact goes out as a JSON number literal (`JSON::Fragment`),
   and numeric strings in answers come back as `BigDecimal`.
