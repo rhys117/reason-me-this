@@ -41,7 +41,7 @@ module ReasonMeThis
       @connection = connection || (engine ? Engines.connection(engine, blueprints:) : Connection.new(url, api_key))
     end
 
-    def run(name, facts, calculation: nil, version: nil, on: nil, trace: false) # rubocop:disable Metrics/ParameterLists
+    def run(name, facts, calculation: nil, version: nil, on: nil, trace: false)
       name, version = pinned(name, version)
       answer = request(:post, at(name, :run), {facts:, calculation:, version:, on:, trace: (true if trace)}.compact)
       return Answer.new(answer) unless trace
