@@ -1,0 +1,5 @@
+lib/reason_me_this/blueprint.rb
+lib/reason_me_this/blueprint
+spec/fixtures/typed
+--parser=prism
+--enable-experimental-rbs-comments

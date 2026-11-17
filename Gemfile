@@ -8,5 +8,6 @@ group :development do
   gem 'rspec'
   gem 'rubocop'
   gem 'rubocop-rspec'
+  gem 'sorbet', require: false
   gem 'sqlite3'
 end
