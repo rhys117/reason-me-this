@@ -123,6 +123,79 @@ to leave the version that is live now live, so the new one waits until it is mad
 It answers what the service does: the new version, the day it takes effect and the live version. It used
 to answer the version number alone; read that as `publish("bill")[:version]`.
 
+## Blueprints in Ruby
+
+A blueprint can be written in Ruby instead of YAML. `ReasonMeThis::Blueprint.define` builds the same
+document a blueprint file holds, so it is pushed, checked and run exactly as one is.
+
+```ruby
+ROOM_HIRE = ReasonMeThis::Blueprint.define do
+  table :rates, [{period: "daytime", hourly: 60}, {period: "evening", hourly: 80}]
+
+  calculation :hire do
+    inputs do
+      number :hours
+      string :period, default: "daytime", one_of: {table: :rates, column: :period}
+      boolean :member, default: false
+      list :extras, default: [] do
+        string :item
+        number :price
+      end
+    end
+
+    lookup :hourly, table: :rates, where: {period: :period}, value: :hourly
+    formula :cost, "hours * hourly + SUM(PLUCK(extras, price))"
+    rules :discount, pick: :highest, otherwise: 0 do
+      rule :member, "member", value: 10
+      rule :long_hire, "hours >= 8", value: 15
+    end
+    formula :total, "ROUND(cost * (100 - discount) / 100, 2)"
+    formula(:deposit, "ROUND(total * 0.2, 2)").when("total > 200", else: 0)
+
+    outputs :total, :discount
+    output :deposit, type: :number
+    event :long_hire, "hours >= 8", data: [:total]
+  end
+end
+
+ReasonMeThis.push("room_hire", yaml: ROOM_HIRE.yaml)    # to the service
+File.write("config/blueprints/room_hire/blueprint.yml", ROOM_HIRE.yaml)    # or for a local engine
+ROOM_HIRE.to_h                                          # the document, with text keys
+```
+
+- Names are symbols, and formulas and conditions are text, or a plain number or true or false.
+- An input is written by its type: `number`, `string`, `date`, `time`, `boolean` or `list`, with `default:`,
+  `optional:` and, on a number or a string, `one_of:`. A block on a `list` gives the fields of each row.
+- A step is written by its type, name first: `formula`, `rules`, `lookup`, `decide`, `run`, `repeat`, `sum`,
+  `group`, `compare` and `slice`, each taking the keys the blueprint format gives it. `step :name, :type, spec`
+  writes a step of any other type.
+- `.when(condition, else: formula)` on any step makes it conditional.
+- `import "rates"` at the top imports a blueprint by name or path.
+- The YAML is written with decimals exact (`BigDecimal("0.1")` stays `0.1`), dates as dates and no aliases.
+  The first calculation is the default.
+- The service or the engine still does the checking: a formula that cannot be read or a name that does not
+  exist is a problem reported by `push`, or raised when a local engine runs it.
+
+### With Sorbet
+
+Every method carries an RBS comment signature and every block binds `self`, so a blueprint type checks in
+a `# typed: strict` file with nothing added, once `tapioca gem reason_me_this` has written the gem's RBI
+and Sorbet runs with `--parser=prism --enable-experimental-rbs-comments`. Annotate the constant:
+
+```ruby
+# typed: strict
+
+ROOM_HIRE = ReasonMeThis::Blueprint.define do
+  calculation :hire do
+    inputs { nummber :hours }                 # Method `nummber` does not exist on `ReasonMeThis::Blueprint::Fields`
+    lookup :hourly, table: "rates"            # Expected `Symbol` but found `String("rates")` for argument `table`
+  end
+end #: ReasonMeThis::Blueprint
+```
+
+Sorbet checks the shape: the methods, their keys and the kinds of value they take. It does not read a
+formula or know which names exist; that stays with the service or the engine.
+
 ## Schema
 
 ```ruby
@@ -399,6 +472,7 @@ out by the service from the rep's deals. See its README.
 bundle install
 bundle exec rspec
 bundle exec rubocop
+SRB_SKIP_GEM_RBIS=1 bundle exec srb tc
 ```
 
 The specs of a local engine are skipped unless the engine is in the bundle. To run them, write a

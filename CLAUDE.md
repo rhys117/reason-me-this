@@ -32,6 +32,13 @@ separately.
   a connection with `ReasonMeThis::Engines` that answers as the service would. The specs tagged `:engine`
   are that connection's contract and run with `BUNDLE_GEMFILE=gemfiles/engine.gemfile`, an untracked
   gemfile of your own that adds the engine; run both bundles before committing.
+- `lib/reason_me_this/blueprint.rb` and `lib/reason_me_this/blueprint/` are the Ruby way to write a blueprint.
+  They build the document a blueprint file holds and nothing more: checking stays with the service or the
+  engine. They are `# typed: strict`, all but the YAML writer, which reaches into Psych, with RBS comment signatures (`#:`), never sorbet-runtime, and every block
+  binds `self` in its signature, so a blueprint type checks in an app's strict file.
+  `SRB_SKIP_GEM_RBIS=1 bundle exec srb tc` checks them and `spec/fixtures/typed`, and a spec runs it. A key
+  the blueprint format gains is a keyword on its step's method, with a signature.
+- `yaml` is required only where a blueprint is written as YAML.
 - The service's HTTP contract is fixed: the client adapts to it, never the other way.
 - Numbers stay exact both ways: a `BigDecimal` fact goes out as a JSON number literal (`JSON::Fragment`),
   and numeric strings in answers come back as `BigDecimal`.

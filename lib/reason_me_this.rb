@@ -5,6 +5,7 @@ require 'reason_me_this/errors'
 require 'reason_me_this/explanation'
 require 'reason_me_this/webhook'
 require 'reason_me_this/connection'
+require 'reason_me_this/blueprint'
 require 'reason_me_this/engines'
 require 'reason_me_this/configuration'
 require 'reason_me_this/saving'
@@ -40,7 +41,7 @@ module ReasonMeThis
       @connection = connection || (engine ? Engines.connection(engine, blueprints:) : Connection.new(url, api_key))
     end
 
-    def run(name, facts, calculation: nil, version: nil, on: nil, trace: false) # rubocop:disable Metrics/ParameterLists
+    def run(name, facts, calculation: nil, version: nil, on: nil, trace: false)
       name, version = pinned(name, version)
       answer = request(:post, at(name, :run), {facts:, calculation:, version:, on:, trace: (true if trace)}.compact)
       return Answer.new(answer) unless trace

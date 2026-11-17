@@ -15,6 +15,15 @@ AllCops:
     - 'examples/*/tmp/**/*'
     - 'vendor/**/*'
 
+Layout/LeadingCommentSpace:
+  AllowRBSInlineAnnotation: true
+
+Naming/BlockForwarding:
+  Enabled: false
+
+Style/ArgumentsForwarding:
+  RedundantBlockArgumentNames: []
+
 Layout/DotPosition:
   EnforcedStyle: trailing
 
@@ -85,6 +94,9 @@ Metrics/BlockLength:
 
 Metrics/ClassLength:
   Enabled: false
+
+Metrics/ParameterLists:
+  CountKeywordArgs: false
 
 Metrics/MethodLength:
   Max: 40
