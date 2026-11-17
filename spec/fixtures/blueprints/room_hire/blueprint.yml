@@ -1,0 +1,19 @@
+# A room hired by the hour. The rate is illustrative.
+calculations:
+  hire:
+    inputs:
+      hours: {type: number}
+      hourly: {type: number, default: 60}
+      booked_on: {type: date, optional: true}
+    steps:
+      - {name: cost, formula: hours * hourly}
+      - {name: total, formula: 'ROUND(cost, 2)'}
+    outputs: [total, {name: booked_on, optional: true}]
+    events:
+      - {name: long_hire, when: hours > 8, data: [total]}
+  deposit:
+    inputs:
+      total: {type: number}
+    steps:
+      - {name: due, formula: 'ROUND(total / total * total * 0.2, 2)'}
+    outputs: [due]

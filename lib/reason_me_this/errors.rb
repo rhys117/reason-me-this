@@ -7,6 +7,8 @@ module ReasonMeThis
   class Timeout < Error; end
   class Unreachable < Error; end
   class InvalidSignature < Error; end
+  class EngineMissing < Error; end
+  class Unsupported < Error; end
 
   class Refused < Error
     attr_reader :report

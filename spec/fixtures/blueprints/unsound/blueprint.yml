@@ -1,0 +1,7 @@
+calculations:
+  hire:
+    inputs:
+      hours: {type: number}
+    steps:
+      - {name: cost, formula: hours * hourly}
+    outputs: [cost]

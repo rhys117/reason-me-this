@@ -1,0 +1,12 @@
+# Two rooms hired together, each priced by the room_hire blueprint beside this one.
+imports: [room_hire]
+
+calculations:
+  suite:
+    inputs:
+      hours: {type: number}
+    steps:
+      - name: room
+        run: {calculation: hire}
+      - {name: total, formula: room.total * 2}
+    outputs: [total]

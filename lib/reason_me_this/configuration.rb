@@ -1,5 +1,5 @@
 module ReasonMeThis
-  Configuration = Struct.new(:url, :api_key, :connection) do
+  Configuration = Struct.new(:url, :api_key, :connection, :engine, :blueprints) do
     def hooks = @hooks ||= []
 
     def after_reasoning(&hook) = hooks << hook
