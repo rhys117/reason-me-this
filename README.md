@@ -3,7 +3,8 @@
 The Ruby client for [Reason Me This](https://reason-me-this.com). It runs, explains, pushes and publishes definitions over HTTP
 and keeps every number exact on the way out and on the way back.
 
-It only speaks HTTP: it needs nothing beyond Ruby's standard library and does not load the engine.
+It speaks HTTP and needs nothing beyond Ruby's standard library. With a licensed engine installed it can
+instead run blueprints in your own process, with no service: see [Without the service](#without-the-service).
 
 ## Install
 
@@ -151,6 +152,8 @@ Every error is a `ReasonMeThis::Error`, with a message in plain words.
 | `Unreachable` | the service could not be reached: refused, DNS, or timed out |
 | `InvalidSignature` | `Webhook.verify` was given a delivery that is unsigned, signed with another secret, or too old |
 | `Rejected` | `push` or `publish` was refused: problems in the definition or failing cases; `#report` has them |
+| `EngineMissing` | a client was given an `engine` whose gems are not installed |
+| `Unsupported` | a client with an `engine` was asked for something only the service does, such as `push` |
 
 ```ruby
 begin
@@ -327,6 +330,40 @@ class Rep < ApplicationRecord
 end
 ```
 
+## Without the service
+
+The engine that runs blueprints on the service is licensed separately. With it installed, a client runs
+blueprint files in your own process: no URL, no key, and nothing sent anywhere.
+
+```ruby
+ReasonMeThis.configure do |config|
+  config.engine = :rust                    # the engine on its native calculator
+  config.blueprints = "config/blueprints"  # config/blueprints/hall_hire/blueprint.yml, as rmt pull writes it
+end
+
+ReasonMeThis.run("hall_hire", {sessions: [{from: Time.iso8601("2026-11-02T16:00:00+11:00"), to: Time.iso8601("2026-11-02T22:00:00+11:00")}]})
+```
+
+`run`, `explain`, `schema`, `definitions` and `definition` answer as they do from the service, with the
+same values and the same errors, so models, receipts and hooks work unchanged. A client of its own takes
+the same options: `ReasonMeThis::Client.new(engine: :rust, blueprints: "config/blueprints")`.
+
+- This gem does not depend on the engine. Add the engine gems you were given to your
+  Gemfile. Without them, a client given an engine raises `ReasonMeThis::EngineMissing` when it is
+  built, saying what could not be loaded. The configured client is built on its first use, so call
+  `ReasonMeThis.default` in the initializer to find out at boot.
+- A name is a folder in `blueprints` holding `blueprint.yml`, with `cases.yml` beside it if you keep one.
+  A name the folder does not have is looked for among the blueprints the engine ships, and an `imports:`
+  by name is found the same way. Without `blueprints`, only the shipped ones run.
+- A blueprint file has no versions. `version:`, `on:` and a pinned name such as `"bill@3"` are refused with
+  `InvalidRequest` rather than ignored, and an explanation's `version` is `"local"`. An import pinned to a
+  version, `rates@3`, is not found.
+- `push` and `publish` raise `ReasonMeThis::Unsupported`: edit the files, and use the service to publish.
+- A blueprint is read and checked on its first run and kept until a file in the folder is added, removed
+  or changed.
+- The engine is chosen for the whole process, not for each client, and a run has no time limit.
+- A client takes a `url` or an `engine`, not both. The `rmt` CLI always uses the service.
+
 ## In tests
 
 A client talks through a connection: anything with `request(method, path, body)` that answers
@@ -363,3 +400,7 @@ bundle install
 bundle exec rspec
 bundle exec rubocop
 ```
+
+The specs of a local engine are skipped unless the engine is in the bundle. To run them, write a
+gemfile of your own that evaluates this one and adds the engine gems, such as `gemfiles/engine.gemfile`
+(`gemfiles/` is ignored by git), and run `BUNDLE_GEMFILE=gemfiles/engine.gemfile bundle exec rspec`.

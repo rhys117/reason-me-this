@@ -46,4 +46,34 @@ RSpec.describe ReasonMeThis::Model, '#keeps_receipts' do
     expect { round.result! }.to raise_error(ReasonMeThis::InvalidFacts)
     expect(ReasonMeThis::Receipt.count).to eq(0)
   end
+
+  context 'with a local engine', :engine do
+    let(:local) { ReasonMeThis::Client.new(engine: :rust, blueprints: File.expand_path('../fixtures/blueprints', __dir__)) }
+    let(:hired_class) do
+      local_client = local
+      Class.new(ActiveRecord::Base) do
+        self.table_name = 'rounds'
+        def self.name = 'Round'
+
+        include ReasonMeThis::Model
+
+        define_method(:reason_me_this_client) { local_client }
+
+        reasons :result, with: 'room_hire' do
+          facts { {hours: 9} }
+          saves differential: 'total'
+          keeps_receipts
+        end
+      end
+    end
+
+    it 'saves values and keeps a receipt whose version is local' do
+      hired = hired_class.create!
+      hired.result!
+
+      expect(hired.reload.differential).to eq(540)
+      expect(hired.reason_me_this_receipts.sole).to have_attributes(blueprint: 'room_hire', version: 'local', outputs: {'total' => '540', 'booked_on' => nil},
+                                                                    events: [{'name' => 'long_hire', 'data' => {'total' => '540'}}])
+    end
+  end
 end

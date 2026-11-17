@@ -6,7 +6,8 @@ Gem::Specification.new do |spec|
   spec.authors = ['Rhys Murray']
   spec.license = 'MIT'
   spec.summary = 'Run, explain and publish Reason Me This blueprints from Ruby, and the rmt CLI'
-  spec.description = 'The client for reason-me-this.com: runs, explains, pushes and publishes blueprints over HTTP, keeping numbers exact.'
+  spec.description = 'The client for reason-me-this.com: runs, explains, pushes and publishes blueprints over HTTP, keeping numbers exact. ' \
+    'With a separately licensed engine installed, it runs blueprint files in process instead.'
   spec.required_ruby_version = '>= 3.4'
   spec.files = Dir['lib/**/*.{rb,tt}', 'exe/*', 'README.md', 'LICENSE.txt']
   spec.bindir = 'exe'

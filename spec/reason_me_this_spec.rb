@@ -20,6 +20,25 @@ RSpec.describe ReasonMeThis do
     expect { described_class.definitions }.to raise_error(described_class::Unreachable, %r{at http://127\.0\.0\.1:#{port}/api})
   end
 
+  context 'when configured with an engine', :engine do
+    after do
+      described_class.configure do |config|
+        config.engine = nil
+        config.blueprints = nil
+      end
+    end
+
+    it 'runs blueprints from the configured folder, in this process' do
+      described_class.configure do |config|
+        config.url = nil
+        config.engine = :rust
+        config.blueprints = File.expand_path('fixtures/blueprints', __dir__)
+      end
+
+      expect(described_class.run('room_hire', {hours: 2}).total).to eq(120)
+    end
+  end
+
   it 'builds a client of its own for a URL and key, for an app with more than one service' do
     port = closed_port
 

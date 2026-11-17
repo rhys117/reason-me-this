@@ -5,6 +5,7 @@ require 'reason_me_this/errors'
 require 'reason_me_this/explanation'
 require 'reason_me_this/webhook'
 require 'reason_me_this/connection'
+require 'reason_me_this/engines'
 require 'reason_me_this/configuration'
 require 'reason_me_this/saving'
 require 'reason_me_this/recipe'
@@ -32,8 +33,11 @@ module ReasonMeThis
     # asked for (Day::Invalid in its API).
     REQUEST_PROBLEM = /\A(?:(?:on|effective_from) should be a date written YYYY-MM-DD, not |give version or on, not both\z)/
 
-    def initialize(url: nil, api_key: nil, connection: Connection.new(url, api_key))
-      @connection = connection
+    # With engine, blueprints run in this process from the blueprints folder, and nothing is sent to a service.
+    def initialize(url: nil, api_key: nil, engine: nil, blueprints: nil, connection: nil)
+      raise Error.new('give a url or an engine, not both') if url && engine
+
+      @connection = connection || (engine ? Engines.connection(engine, blueprints:) : Connection.new(url, api_key))
     end
 
     def run(name, facts, calculation: nil, version: nil, on: nil, trace: false) # rubocop:disable Metrics/ParameterLists

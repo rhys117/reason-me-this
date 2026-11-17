@@ -3,3 +3,4 @@
 /vendor/
 *.gem
 /Gemfile.lock
+/gemfiles/
