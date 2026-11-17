@@ -34,6 +34,7 @@ RSpec.describe ReasonMeThis::Blueprint do
           'on': 'yes'
       calculations:
         rate:
+          steps: []
           outputs:
           - rates
     YAML
