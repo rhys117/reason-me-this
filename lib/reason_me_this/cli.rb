@@ -2,6 +2,8 @@ require 'json'
 require 'fileutils'
 require 'optparse'
 require 'reason_me_this'
+require 'reason_me_this/blueprint/ruby'
+require 'reason_me_this/blueprint/yaml'
 require 'reason_me_this/cli/output'
 
 module ReasonMeThis
@@ -29,9 +31,13 @@ module ReasonMeThis
         schema NAME [--version N|draft|--on DATE] [--calculation NAME]
                                                 print JSON Schemas for a calculation's inputs and outputs
         list                                    list the definitions and their published versions
-        pull NAME [--dir DIR]                   write DIR/NAME/blueprint.yml and cases.yml
+        pull NAME [--dir DIR] [--ruby]          write DIR/NAME/blueprint.yml and cases.yml; --ruby writes blueprint.rb
 
-      A BLUEPRINT ending in .yml or .yaml or containing a / is a file; anything else is a name.
+      Keep a blueprint as Ruby:
+        ruby BLUEPRINT                          write a YAML blueprint file as the Ruby that builds it, beside it
+
+      A BLUEPRINT ending in .yml, .yaml or .rb or containing a / is a file; anything else is a name. A .rb file
+      is run, and the ReasonMeThis::Blueprint it ends with is sent as YAML.
       --on YYYY-MM-DD picks the version in effect that day. publish --effective-from makes the new version take
       effect on that day (today by default); --no-live keeps the version that is live now live, so the new one waits.
       Every command but guide and describe needs RMT_API_KEY (create one at #{KEYS}).
@@ -45,6 +51,9 @@ module ReasonMeThis
       2 the blueprint has problems, 3 a case failed, 64 usage, 69 the service could not be reached,
       77 the service refused the key
     TEXT
+
+    class Unreadable < Error
+    end
 
     WORKFLOW = <<~MARKDOWN.freeze
       # Building a blueprint
@@ -104,6 +113,8 @@ module ReasonMeThis
     rescue OptionParser::ParseError, Errno::ENOENT => e
       @err.puts(e.message)
       usage
+    rescue Unreadable, Blueprint::Ruby::Unwritable => e
+      answered(:problems, {'problems' => [e.message]}, 2)
     end
 
     private
@@ -111,7 +122,7 @@ module ReasonMeThis
     def dispatch(command, argv)
       case command
       when 'guide', 'describe', 'list' then send(command)
-      when 'check', 'test', 'run', 'schema', 'push', 'publish', 'pull' then argv.first ? send(command, argv) : usage
+      when 'check', 'test', 'run', 'schema', 'push', 'publish', 'pull', 'ruby' then argv.first ? send(command, argv) : usage
       else usage
       end
     end
@@ -133,7 +144,7 @@ module ReasonMeThis
     end
 
     def check(argv)
-      on_service(:post, '/check', {yaml: File.read(argv.first)}) do |_status, answer|
+      on_service(:post, '/check', {yaml: blueprint(argv.first)}) do |_status, answer|
         answered(:problems, answer.slice('problems'), answer['problems'].any? ? 2 : 0)
       end
     end
@@ -141,7 +152,7 @@ module ReasonMeThis
     def test(argv)
       return usage unless argv[1]
 
-      on_service(:post, '/check', {yaml: File.read(argv[0]), cases: File.read(argv[1])}) { |_status, answer| answered(:report, answer, proven(answer)) }
+      on_service(:post, '/check', {yaml: blueprint(argv[0]), cases: File.read(argv[1])}) { |_status, answer| answered(:report, answer, proven(answer)) }
     end
 
     def run(argv)
@@ -155,7 +166,7 @@ module ReasonMeThis
       body = {facts:, **options.slice(:calculation, :version, :on, :trace)}
       return ran(:post, "/definitions/#{argv.first}/run", body, options) unless path?(argv.first)
 
-      ran(:post, '/try', {yaml: File.read(argv.first), **body.except(:version, :on)}, options)
+      ran(:post, '/try', {yaml: blueprint(argv.first), **body.except(:version, :on)}, options)
     end
 
     def choosing(parser, options)
@@ -197,10 +208,10 @@ module ReasonMeThis
     end
 
     def push(argv)
-      name, blueprint, cases = argv
-      return usage unless blueprint
+      name, file, cases = argv
+      return usage unless file
 
-      body = {yaml: File.read(blueprint), cases: cases ? File.read(cases) : ''}
+      body = {yaml: blueprint(file), cases: cases ? File.read(cases) : ''}
       on_service(:put, "/definitions/#{name}", body) { |_status, answer| answered(:report, answer, proven(answer)) }
     end
 
@@ -221,13 +232,42 @@ module ReasonMeThis
 
     def pull(argv)
       options = {dir: '.'}
-      OptionParser.new { |parser| parser.on('--dir DIR') { |dir| options[:dir] = dir } }.parse!(argv)
+      OptionParser.new do |parser|
+        parser.on('--dir DIR') { |dir| options[:dir] = dir }
+        parser.on('--ruby') { options[:ruby] = true }
+      end.parse!(argv)
       name = argv.first
       on_service(:get, "/definitions/#{name}") do |status, answer|
         next answered(:refusal, answer, 1) unless status == 200
 
-        write_new({'blueprint.yml' => answer['yaml'], 'cases.yml' => answer['cases']}.transform_keys { |file| File.join(options[:dir], name, file) })
+        kept = options[:ruby] ? {'blueprint.rb' => as_ruby(answer['yaml'], name)} : {'blueprint.yml' => answer['yaml']}
+        write_new({**kept, 'cases.yml' => answer['cases']}.transform_keys { |file| File.join(options[:dir], name, file) })
       end
+    end
+
+    def ruby(argv)
+      path = argv.first
+      name = File.basename(path, '.*')
+      name = File.basename(File.dirname(File.expand_path(path))) if name == 'blueprint'
+      write_new({"#{path.sub(/\.ya?ml\z/, '')}.rb" => as_ruby(File.read(path), name)})
+    end
+
+    def as_ruby(yaml, name)
+      Blueprint::Ruby.write(Blueprint::Yaml.read(yaml), name)
+    rescue Psych::SyntaxError => e
+      raise Unreadable.new("The blueprint is not valid YAML: #{e.message}")
+    end
+
+    # A blueprint file's YAML. A Ruby file is run for the blueprint it ends with.
+    def blueprint(path)
+      return File.read(path) unless path.end_with?('.rb')
+
+      built = Module.new.module_eval(File.read(path), path)
+      return built.yaml if built.is_a?(Blueprint)
+
+      raise Unreadable.new("#{path} should end with the blueprint it builds, a ReasonMeThis::Blueprint, not #{built.inspect}")
+    rescue ScriptError, StandardError => e
+      raise e.is_a?(Unreadable) ? e : Unreadable.new("#{path} could not be run: #{e.class}: #{e.message}")
     end
 
     def write_new(files)
@@ -259,7 +299,7 @@ module ReasonMeThis
       answer['failed'].to_i.positive? ? 3 : 0
     end
 
-    def path?(argument) = argument.end_with?('.yml', '.yaml') || argument.include?('/')
+    def path?(argument) = argument.end_with?('.yml', '.yaml', '.rb') || argument.include?('/')
 
     def answered(kind, answer, code, context = {})
       @output.show(kind, answer, **context)
