@@ -81,7 +81,7 @@ RSpec.describe ReasonMeThis::Engines do
       expect { client.explain('../blueprints/room_hire', {hours: 1}) }.to raise_error(ReasonMeThis::Unsupported)
     end
 
-    it 'refuses a version or a day, since a blueprint file has no versions' do
+    it 'refuses a version or a day for a blueprint kept without versions' do
       [-> { client.run('room_hire@3', {hours: 1}) }, -> { client.run('room_hire', {hours: 1}, version: 'draft') },
        -> { client.explain('room_hire', {hours: 1}, on: Date.new(2026, 7, 1)) }].each do |versioned|
         expect(&versioned).to raise_error(ReasonMeThis::InvalidRequest, 'room_hire runs from a blueprint file with no versions, so version and on do not apply')
