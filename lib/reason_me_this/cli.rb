@@ -18,7 +18,7 @@ module ReasonMeThis
         guide                                   print the guide to building a blueprint
         describe                                list step types with examples and the functions formulas can call
         check BLUEPRINT                         list problems with a blueprint file
-        test BLUEPRINT CASES                    run each case's facts and compare the expected outputs
+        test BLUEPRINT [CASES]                  run each case's facts and compare the expected outputs
         run BLUEPRINT [--facts FILE] [--calculation NAME] [--trace]
                                                 run a blueprint file; facts come from FILE or standard input
 
@@ -37,7 +37,8 @@ module ReasonMeThis
         ruby BLUEPRINT                          write a YAML blueprint file as the Ruby that builds it, beside it
 
       A BLUEPRINT ending in .yml, .yaml or .rb or containing a / is a file; anything else is a name. A .rb file
-      is run, and the ReasonMeThis::Blueprint it ends with is sent as YAML.
+      is run, and the ReasonMeThis::Blueprint it ends with is sent as YAML, with the examples it gives as its
+      cases when no CASES file is named.
       --on YYYY-MM-DD picks the version in effect that day. publish --effective-from makes the new version take
       effect on that day (today by default); --no-live keeps the version that is live now live, so the new one waits.
       Every command but guide and describe needs RMT_API_KEY (create one at #{KEYS}).
@@ -150,9 +151,9 @@ module ReasonMeThis
     end
 
     def test(argv)
-      return usage unless argv[1]
+      cases = cases(*argv.first(2)) or return usage
 
-      on_service(:post, '/check', {yaml: blueprint(argv[0]), cases: File.read(argv[1])}) { |_status, answer| answered(:report, answer, proven(answer)) }
+      on_service(:post, '/check', {yaml: blueprint(argv[0]), cases:}) { |_status, answer| answered(:report, answer, proven(answer)) }
     end
 
     def run(argv)
@@ -211,7 +212,7 @@ module ReasonMeThis
       name, file, cases = argv
       return usage unless file
 
-      body = {yaml: blueprint(file), cases: cases ? File.read(cases) : ''}
+      body = {yaml: blueprint(file), cases: cases(file, cases) || ''}
       on_service(:put, "/definitions/#{name}", body) { |_status, answer| answered(:report, answer, proven(answer)) }
     end
 
@@ -258,12 +259,19 @@ module ReasonMeThis
       raise Unreadable.new("The blueprint is not valid YAML: #{e.message}")
     end
 
-    # A blueprint file's YAML. A Ruby file is run for the blueprint it ends with.
-    def blueprint(path)
-      return File.read(path) unless path.end_with?('.rb')
+    def blueprint(path) = path.end_with?('.rb') ? built(path).yaml : File.read(path)
 
+    # The cases file, or without one the examples a Ruby file gives.
+    def cases(blueprint, path = nil)
+      return File.read(path) if path
+
+      built(blueprint).cases_yaml if blueprint.end_with?('.rb')
+    end
+
+    # A Ruby file is run for the blueprint it ends with.
+    def built(path)
       built = Module.new.module_eval(File.read(path), path)
-      return built.yaml if built.is_a?(Blueprint)
+      return built if built.is_a?(Blueprint)
 
       raise Unreadable.new("#{path} should end with the blueprint it builds, a ReasonMeThis::Blueprint, not #{built.inspect}")
     rescue ScriptError, StandardError => e
