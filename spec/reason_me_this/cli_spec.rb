@@ -249,6 +249,23 @@ RSpec.describe ReasonMeThis::CLI do
       expect(sent).to eq(ReasonMeThis::Blueprint::Yaml.read(blueprint))
     end
 
+    it 'tests and pushes a Ruby file with the examples it gives, unless a cases file is named' do
+      File.write('total.rb', ruby.sub("    outputs :total\n", "    outputs :total\n    example 'three units', facts: {units: 3}, expect: {total: 9}\n"))
+      answers[[:post, '/check']] = answers[[:put, '/definitions/total']] = [200, {'problems' => [], 'passed' => 1, 'failed' => 0, 'cases' => []}]
+      examples = "- name: three units\n  facts:\n    units: 3\n  expect:\n    total: 9\n"
+
+      codes = [rmt('test', 'total.rb'), rmt('push', 'total', 'total.rb'), rmt('test', 'total.rb', 'cases.yml')]
+
+      expect(codes).to eq([0, 0, 0])
+      expect(connection.requests.map { |*, body| body[:cases] }).to eq([examples, examples, File.read('cases.yml')])
+      expect(sent).to eq(ReasonMeThis::Blueprint::Yaml.read(blueprint))
+    end
+
+    it 'exits 64 when a YAML file is tested with no cases file' do
+      expect(rmt('test', 'total.yml')).to eq(64)
+      expect(connection.requests).to eq([])
+    end
+
     it 'exits 2 with the problem when a Ruby file does not run, does not end with a blueprint, or a file cannot be written as Ruby' do
       File.write('broken.rb', 'ReasonMeThis::Blueprint.define { calculation(:total) { formulae :total, 1 } }')
       File.write('other.rb', '1 + 1')

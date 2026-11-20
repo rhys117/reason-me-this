@@ -15,6 +15,8 @@ ROOM_HIRE = ReasonMeThis::Blueprint.define do
     outputs :total
     output :booked_on, optional: true
     event :long_hire, 'hours > 8', data: [:total]
+
+    example 'two hours at the usual rate', facts: {hours: 2}, expect: {total: 120}
   end
 
   calculation :deposit do

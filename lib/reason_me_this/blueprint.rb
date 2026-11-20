@@ -62,9 +62,26 @@ module ReasonMeThis
     end
 
     #: -> String
-    def yaml
+    def yaml = written(to_h)
+
+    # The examples its calculations give, as the cases a cases file holds.
+    #: -> Array[Hash[String, untyped]]
+    def cases
+      default = @calculations.keys.first
+      Blueprint.plain(@calculations.flat_map do |name, calculation|
+        calculation.examples.map { |example| name == default ? example : {**example, calculation: name} }
+      end)
+    end
+
+    #: -> String
+    def cases_yaml = written(cases)
+
+    private
+
+    #: (untyped) -> String
+    def written(document)
       require 'reason_me_this/blueprint/yaml'
-      Yaml.write(to_h)
+      Yaml.write(document)
     end
   end
 end

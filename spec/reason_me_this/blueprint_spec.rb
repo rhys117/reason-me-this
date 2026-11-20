@@ -14,6 +14,33 @@ RSpec.describe ReasonMeThis::Blueprint do
     expect(read(ROOM_HIRE.yaml)).to eq(ROOM_HIRE.to_h)
   end
 
+  it 'gives the examples of its calculations as the cases a cases file holds, and leaves them out of the document' do
+    expect(ROOM_HIRE.cases).to eq(read(File.read(File.join(fixtures, 'blueprints/room_hire/cases.yml'))))
+    expect(read(ROOM_HIRE.cases_yaml)).to eq(ROOM_HIRE.cases)
+  end
+
+  it 'names the calculation of an example that is not the first, and writes its facts as a blueprint writes values' do
+    blueprint = described_class.define do
+      calculation(:hire) { outputs :total }
+      calculation :deposit do
+        example 'a fifth down', facts: {total: BigDecimal('150.10'), on: Date.new(2026, 7, 1)}, expect: {due: BigDecimal('30.02')}, events: [:paid]
+      end
+    end
+
+    expect(blueprint.cases_yaml).to eq(<<~YAML)
+      - name: a fifth down
+        facts:
+          total: 150.1
+          'on': 2026-07-01
+        expect:
+          due: 30.02
+        events:
+        - paid
+        calculation: deposit
+    YAML
+    expect(described_class.define { calculation(:hire) { outputs :total } }.cases).to eq([])
+  end
+
   it 'writes decimals exactly, dates as dates, times as ISO 8601 text, and a value used twice in full both times' do
     row = {from: Date.new(2026, 7, 1), opens: Time.new(2026, 7, 1, 9, 0, 0, '+10:00'), rate: BigDecimal('0.1000000000000000000001'), on: 'yes'}
     blueprint = described_class.define do

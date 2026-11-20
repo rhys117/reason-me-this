@@ -31,6 +31,7 @@ rmt run electricity_bill --facts facts.json  # a shipped blueprint, by name
 rmt ruby bill.yml                            # write bill.rb, the same blueprint in Ruby
 rmt pull bill --ruby                         # bill/blueprint.rb in place of blueprint.yml
 rmt check bill.rb && rmt push bill bill.rb   # a .rb file is run and sent as the YAML it builds
+rmt test bill.rb                             # with the examples it gives as its cases
 ```
 
 `check`, `test` and `run` on a file send its text to the service and save nothing. Exit codes: 0 success,
@@ -158,10 +159,13 @@ ROOM_HIRE = ReasonMeThis::Blueprint.define do
     outputs :total, :discount
     output :deposit, type: :number
     event :long_hire, "hours >= 8", data: [:total]
+
+    example "a member for two hours", facts: {hours: 2, member: true}, expect: {total: 108, discount: 10}
   end
 end
 
-ReasonMeThis.push("room_hire", yaml: ROOM_HIRE.yaml)    # to the service
+ReasonMeThis.prove(ROOM_HIRE)                           # raises Rejected while it has problems or an example fails
+ReasonMeThis.push("room_hire", yaml: ROOM_HIRE.yaml, cases: ROOM_HIRE.cases_yaml)    # to the service
 File.write("config/blueprints/room_hire/blueprint.yml", ROOM_HIRE.yaml)    # or for a local engine
 ROOM_HIRE.to_h                                          # the document, with text keys
 ```
@@ -175,6 +179,12 @@ ROOM_HIRE.to_h                                          # the document, with tex
   writes a step of any other type.
 - `.when(condition, else: formula)` on any step makes it conditional.
 - `import "rates"` at the top imports a blueprint by name or path.
+- `example "name", facts: {...}, expect: {...}` in a calculation is a worked example of it: the outputs those
+  facts should give, any of them, and with `events:` the events they should set off. `cases` is every example
+  as the list a cases file holds, and `cases_yaml` is that file. They are no part of `to_h` or `yaml`.
+- `ReasonMeThis.prove(blueprint)` checks the blueprint and runs its examples without saving anything. It
+  answers the report, or raises `ReasonMeThis::Rejected` with it when the blueprint has problems or an
+  example fails, so a spec or a build step that calls it keeps an unproven blueprint out.
 - The YAML is written with decimals exact (`BigDecimal("0.1")` stays `0.1`), dates as dates and no aliases.
   The first calculation is the default.
 - The service or the engine still does the checking: a formula that cannot be read or a name that does not
@@ -189,7 +199,8 @@ lost. Comments in the YAML are not carried over. In Ruby it is
 `ReasonMeThis::Blueprint::Ruby.write(ReasonMeThis::Blueprint::Yaml.read(yaml), "bill")`.
 
 Wherever `rmt` takes a blueprint file it takes a `.rb` one: `check`, `test`, `run` and `push` run the file
-and send the YAML of the `ReasonMeThis::Blueprint` it ends with.
+and send the YAML of the `ReasonMeThis::Blueprint` it ends with. `rmt test bill.rb` and `rmt push bill bill.rb`
+send the examples the file gives as its cases; a cases file named after it is sent in their place.
 
 ### With Sorbet
 
@@ -239,7 +250,7 @@ Every error is a `ReasonMeThis::Error`, with a message in plain words.
 | `Timeout` | the run took too long on the service (503) |
 | `Unreachable` | the service could not be reached: refused, DNS, or timed out |
 | `InvalidSignature` | `Webhook.verify` was given a delivery that is unsigned, signed with another secret, or too old |
-| `Rejected` | `push` or `publish` was refused: problems in the definition or failing cases; `#report` has them |
+| `Rejected` | `push`, `publish` or `prove` was refused: problems in the definition or failing cases; `#report` has them |
 | `EngineMissing` | a client was given an `engine` whose gems are not installed |
 | `Unsupported` | a client with an `engine` was asked for something only the service does, such as `push` |
 

@@ -17,7 +17,7 @@ module ReasonMeThis
   class << self
     extend Forwardable
 
-    def_delegators :default, :run, :explain, :schema, :push, :publish, :definitions, :definition
+    def_delegators :default, :run, :explain, :schema, :prove, :push, :publish, :definitions, :definition
 
     def configure
       yield configuration
@@ -51,6 +51,14 @@ module ReasonMeThis
     end
 
     def explain(name, facts, calculation: nil, version: nil, on: nil) = run(name, facts, calculation:, version:, on:, trace: true)
+
+    # Checks a blueprint written in Ruby and runs the examples it gives, saving nothing.
+    def prove(blueprint)
+      report = request(:post, '/check', {yaml: blueprint.yaml, cases: blueprint.cases_yaml})
+      raise Rejected.new(report) if report[:problems].any? || report[:failed].to_i.positive?
+
+      report
+    end
 
     def push(name, yaml:, cases: '') = request(:put, at(name), {yaml:, cases:}, invalid: Rejected)
 

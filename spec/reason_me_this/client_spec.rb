@@ -62,6 +62,42 @@ RSpec.describe ReasonMeThis::Client do
     end
   end
 
+  describe '#prove' do
+    let(:blueprint) do
+      ReasonMeThis::Blueprint.define do
+        calculation :bill do
+          formula :total, 'units * 3'
+          outputs :total
+          example 'two units', facts: {units: 2}, expect: {total: 6}
+        end
+      end
+    end
+    let(:body) { {'problems' => [], 'passed' => 1, 'failed' => 0, 'cases' => []} }
+
+    it 'checks the blueprint with the examples it gives and answers the report' do
+      expect(client.prove(blueprint)).to eq(problems: [], passed: 1, failed: 0, cases: [])
+      expect(connection.requests).to eq([[:post, '/check', {yaml: blueprint.yaml, cases: blueprint.cases_yaml}]])
+    end
+
+    context 'when an example fails' do
+      let(:body) { {'problems' => [], 'passed' => 0, 'failed' => 1, 'cases' => [{'name' => 'two units', 'passed' => false}]} }
+
+      it 'raises Rejected with the report' do
+        expect { client.prove(blueprint) }.to raise_error(ReasonMeThis::Rejected, 'the definition was not accepted: 1 cases failed') do |error|
+          expect(error.report[:cases]).to eq([{name: 'two units', passed: false}])
+        end
+      end
+    end
+
+    context 'when the blueprint has problems' do
+      let(:body) { {'problems' => ['total: step total uses units'], 'passed' => 0, 'failed' => 0, 'cases' => []} }
+
+      it 'raises Rejected with the problems' do
+        expect { client.prove(blueprint) }.to raise_error(ReasonMeThis::Rejected, 'the definition was not accepted: total: step total uses units')
+      end
+    end
+  end
+
   describe '#push' do
     let(:body) { {'problems' => [], 'passed' => 2, 'failed' => 0, 'cases' => []} }
 

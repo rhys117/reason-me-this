@@ -10,7 +10,11 @@ module ReasonMeThis
         @steps = [] #: Array[Step]
         @outputs = [] #: Array[Symbol | Hash[Symbol, untyped]]
         @events = [] #: Array[Hash[Symbol, untyped]]
+        @examples = [] #: Array[Hash[Symbol, untyped]]
       end
+
+      #: Array[Hash[Symbol, untyped]]
+      attr_reader :examples
 
       #: { () [self: Fields] -> void } -> void
       def inputs(&block)
@@ -89,6 +93,12 @@ module ReasonMeThis
       #: (Symbol, String, ?data: Array[Symbol]?) -> void
       def event(name, condition, data: nil)
         @events << {name:, when: condition, data:}.compact
+      end
+
+      # A worked example: facts with the outputs they should give, any of them, and the events they should set off.
+      #: (String, expect: Hash[Symbol, untyped], ?facts: Hash[Symbol, untyped], ?events: Array[Symbol]?) -> void
+      def example(name, expect:, facts: {}, events: nil)
+        @examples << {name:, facts:, expect:, events:}.compact
       end
 
       #: -> Hash[Symbol, untyped]

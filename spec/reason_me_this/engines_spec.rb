@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'open3'
 require 'tmpdir'
+require_relative '../fixtures/typed/room_hire'
 
 RSpec.describe ReasonMeThis::Engines do
   let(:blueprints) { File.expand_path('../fixtures/blueprints', __dir__) }
@@ -85,6 +86,10 @@ RSpec.describe ReasonMeThis::Engines do
        -> { client.explain('room_hire', {hours: 1}, on: Date.new(2026, 7, 1)) }].each do |versioned|
         expect(&versioned).to raise_error(ReasonMeThis::InvalidRequest, 'room_hire runs from a blueprint file with no versions, so version and on do not apply')
       end
+    end
+
+    it 'proves a blueprint written in Ruby by the examples it gives, as the service does' do
+      expect(client.prove(ROOM_HIRE)).to include(problems: [], passed: 1, failed: 0)
     end
 
     it 'cannot push or publish, which belong to the service' do
