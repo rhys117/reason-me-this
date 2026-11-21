@@ -180,8 +180,9 @@ ROOM_HIRE.to_h                                          # the document, with tex
 - `.when(condition, else: formula)` on any step makes it conditional.
 - `import "rates"` at the top imports a blueprint by name or path.
 - `example "name", facts: {...}, expect: {...}` in a calculation is a worked example of it: the outputs those
-  facts should give, any of them, and with `events:` the events they should set off. `cases` is every example
-  as the list a cases file holds, and `cases_yaml` is that file. They are no part of `to_h` or `yaml`.
+  facts should give, any of them, and with `events:` the events they should set off. With `on: Date.new(...)`
+  it runs on that day, so the blueprints it imports by name are the versions in force then; without it, the
+  ones in force today. `cases` is every example as the list a cases file holds, and `cases_yaml` is that file. They are no part of `to_h` or `yaml`.
 - `ReasonMeThis.prove(blueprint)` checks the blueprint and runs its examples without saving anything. It
   answers the report, or raises `ReasonMeThis::Rejected` with it when the blueprint has problems or an
   example fails, so a spec or a build step that calls it keeps an unproven blueprint out.
@@ -454,8 +455,9 @@ the same options: `ReasonMeThis::Client.new(engine: :rust, blueprints: "config/b
 - A name is a folder in `blueprints`. A name the folder does not have is looked for among the blueprints
   the engine ships. Without `blueprints`, only the shipped ones run.
 - A blueprint without versions is `NAME/blueprint.yml`, with `cases.yml` beside it if you keep one. It, and
-  a shipped blueprint, refuse `version:`, `on:` and a pinned name such as `"bill@3"` with `InvalidRequest`
-  rather than ignore them, and an explanation's `version` is `"local"`.
+  a shipped blueprint, refuse `version:` and a pinned name such as `"bill@3"` with `InvalidRequest` rather
+  than ignore them, and an explanation's `version` is `"local"`. It takes `on:`, which chooses the versions
+  of what it imports.
 - A blueprint kept in versions has `NAME/versions.yml` beside a folder for each version: `NAME/v1/blueprint.yml`,
   `NAME/v2/blueprint.yml` and so on, each with its own `cases.yml` if you keep one. `versions.yml` lists every
   version, with the day it takes effect and a note if you like:
@@ -478,8 +480,10 @@ the same options: `ReasonMeThis::Client.new(engine: :rust, blueprints: "config/b
   published and none is retired, so `published_version` is the highest number and `live_version` the one in
   force today. `definition` shows the blueprint and cases of the highest version.
 - An `imports:` entry names a blueprint in the folder, or else one the engine ships. `rates@3` pins version 3.
-  `rates` takes the version in force today, whatever day the importing blueprint runs for, so pin an import
-  that a version should keep.
+  `rates` takes the version in force on the day the run is for, and through every import below it, or today
+  when the run names no day. A blueprint run by `version:` alone imports as of today. An explanation's
+  `imports` and a schema's `"imports"` give the version each blueprint imported by name ran at, through every
+  import, such as `{rates: 1, tariff: "local"}`. A case in `cases.yml` with `on: 2026-06-30` runs on that day.
 - `push` and `publish` raise `ReasonMeThis::Unsupported`: edit the files, and use the service to publish.
 - A blueprint is read and checked on its first run and kept. It is read again when the day turns and, unless
   the engine is told the folder will not change (see the engine's own README), when a file in the folder is
