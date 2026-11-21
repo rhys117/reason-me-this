@@ -451,7 +451,19 @@ the same options: `ReasonMeThis::Client.new(engine: :rust, blueprints: "config/b
 
 An engine that can run a blueprint's steps natively does so unless `native_loop` is false, and falls back by
 itself for a blueprint or a run it cannot. The answers are the same either way; the setting is there to rule
-the native loop out. The service, and an engine that has no native loop, take no notice of it.
+the native loop out. `ReasonMeThis.configuration.native_loop` reads `true` until you set it. To hear of what
+the engine ran another way, or to have it refuse rather than fall back:
+
+```ruby
+ReasonMeThis.configure do |config|
+  config.native_loop = :strict   # refuse a blueprint the native loop cannot run, with ReasonMeThis::Unsupported
+  config.on_fallback { |taken| logger.warn(taken) }  # {kind: :fallback, blueprint: "rates", version: 2, reason: "..."}
+end
+```
+
+The block is told once of each blueprint that falls back whole (`kind: :fallback`) and of each run that started
+natively and was finished another way (`kind: :retreat`), which `:strict` reports and does not refuse. The
+service, and an engine that has no native loop, take no notice of either setting.
 
 - This gem does not depend on the engine. Add the engine gems you were given to your
   Gemfile. Without them, a client given an engine raises `ReasonMeThis::EngineMissing` when it is
