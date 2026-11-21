@@ -7,10 +7,14 @@ module ReasonMeThis
 
     def self.register(name, &builder) = @builders[name.to_sym] = builder
 
-    def self.connection(name, blueprints: nil)
+    # A setting is handed to the engine only when it was given and the engine takes it, so an engine with no native
+    # loop is built as it always was.
+    def self.connection(name, blueprints: nil, **settings)
       raise Error.new("an engine is named in lowercase letters, digits and underscores, not #{name}") unless NAME.match?(name.to_s)
 
-      @builders.fetch(name.to_sym) { load(name) }.call(blueprints:)
+      builder = @builders.fetch(name.to_sym) { load(name) }
+      taken = builder.parameters.filter_map { |kind, setting| setting if %i[key keyreq].include?(kind) }
+      builder.call(blueprints:, **settings.compact.slice(*taken))
     end
 
     def self.load(name)

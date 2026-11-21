@@ -439,6 +439,7 @@ blueprint files in your own process: no URL, no key, and nothing sent anywhere.
 ReasonMeThis.configure do |config|
   config.engine = :rust                    # the engine on its native calculator
   config.blueprints = "config/blueprints"  # config/blueprints/hall_hire/blueprint.yml, as rmt pull writes it
+  config.native_loop = false               # only to turn the engine's native loop off; leave it out otherwise
 end
 
 ReasonMeThis.run("hall_hire", {sessions: [{from: Time.iso8601("2026-11-02T16:00:00+11:00"), to: Time.iso8601("2026-11-02T22:00:00+11:00")}]})
@@ -447,6 +448,10 @@ ReasonMeThis.run("hall_hire", {sessions: [{from: Time.iso8601("2026-11-02T16:00:
 `run`, `explain`, `schema`, `definitions` and `definition` answer as they do from the service, with the
 same values and the same errors, so models, receipts and hooks work unchanged. A client of its own takes
 the same options: `ReasonMeThis::Client.new(engine: :rust, blueprints: "config/blueprints")`.
+
+An engine that can run a blueprint's steps natively does so unless `native_loop` is false, and falls back by
+itself for a blueprint or a run it cannot. The answers are the same either way; the setting is there to rule
+the native loop out. The service, and an engine that has no native loop, take no notice of it.
 
 - This gem does not depend on the engine. Add the engine gems you were given to your
   Gemfile. Without them, a client given an engine raises `ReasonMeThis::EngineMissing` when it is
