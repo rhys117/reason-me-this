@@ -18,6 +18,51 @@ RSpec.describe ReasonMeThis::Engines do
     expect(ReasonMeThis::Client.new(engine: :abacus, blueprints: 'rules').run('bill', {}).folder).to eq('rules')
   end
 
+  describe 'the native loop setting' do
+    around do |example|
+      forget
+      example.run
+      forget
+    end
+
+    def forget = ReasonMeThis.configure { |config| config.to_h.each_key { |setting| config[setting] = nil } }
+
+    def built(**settings)
+      ReasonMeThis.configure do |config|
+        config.engine = :abacus
+        settings.each { |setting, value| config[setting] = value }
+      end
+      ReasonMeThis.run('bill', {}).to_h
+    end
+
+    it 'leaves an engine to its own default when the configuration says nothing' do
+      described_class.register(:abacus) { |blueprints:, native_loop: true| FakeConnection.new(200, 'native' => native_loop, 'folder' => blueprints) }
+
+      expect(built).to eq(native: true, folder: nil)
+    end
+
+    it 'reaches the engine when the configuration turns it off' do
+      described_class.register(:abacus) { |blueprints:, native_loop: true| FakeConnection.new(200, 'native' => native_loop, 'folder' => blueprints) }
+
+      expect(built(native_loop: false, blueprints: 'rules')).to eq(native: false, folder: 'rules')
+    end
+
+    it 'is not handed to an engine that has no native loop, which runs as it always did' do
+      described_class.register(:abacus) { |blueprints:| FakeConnection.new(200, 'folder' => blueprints) }
+
+      expect(built(native_loop: false, blueprints: 'rules')).to eq(folder: 'rules')
+    end
+
+    it 'is ignored by a client of the service' do
+      ReasonMeThis.configure do |config|
+        config.url = 'https://example.test/api'
+        config.native_loop = false
+      end
+
+      expect(ReasonMeThis.default).to be_a(ReasonMeThis::Client)
+    end
+  end
+
   it 'refuses a name no engine could have, and a client given a service as well' do
     expect { ReasonMeThis::Client.new(engine: '../abacus') }.to raise_error(ReasonMeThis::Error, /\Aan engine is named in lowercase letters/)
     expect { ReasonMeThis::Client.new(url: 'https://example.test/api', engine: :rust) }.to raise_error(ReasonMeThis::Error, 'give a url or an engine, not both')
@@ -36,6 +81,21 @@ RSpec.describe ReasonMeThis::Engines do
       answer = client.run('room_hire', {hours: BigDecimal('2.5'), hourly: 61, booked_on: Date.new(2026, 11, 2)})
 
       expect(answer.to_h).to eq(total: BigDecimal('152.5'), booked_on: Date.new(2026, 11, 2))
+    end
+
+    it 'answers the same with the native loop left on and turned off in the configuration' do
+      answers = [nil, false].map do |native_loop|
+        ReasonMeThis.configure do |config|
+          config.engine = :rust
+          config.blueprints = blueprints
+          config.native_loop = native_loop
+        end
+        ReasonMeThis.run('room_hire', {hours: BigDecimal('2.5'), hourly: 61}).to_h
+      end
+
+      expect(answers).to eq([{total: BigDecimal('152.5'), booked_on: nil}] * 2)
+    ensure
+      ReasonMeThis.configure { |config| config.to_h.each_key { |setting| config[setting] = nil } }
     end
 
     it 'opens no connection to anything' do
