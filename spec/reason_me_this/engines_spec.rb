@@ -195,6 +195,38 @@ RSpec.describe ReasonMeThis::Engines do
       end
     end
 
+    context 'with a blueprint whose import is kept in versions' do
+      let(:blueprints) { Dir.mktmpdir }
+      let(:invoice) do
+        ReasonMeThis::Blueprint.define do
+          import :rates
+          calculation :invoice do
+            inputs { number :hours }
+            run :billed, :hire
+            outputs :billed
+            example 'before July', on: Date.new(2026, 6, 30), facts: {hours: 1}, expect: {billed: {total: 50}}
+            example 'from July', on: Date.new(2026, 7, 1), facts: {hours: 1}, expect: {billed: {total: 60}}
+          end
+        end
+      end
+
+      before do
+        FileUtils.mkdir_p(File.join(blueprints, 'rates/v1'))
+        FileUtils.mkdir_p(File.join(blueprints, 'rates/v2'))
+        File.write(File.join(blueprints, 'rates/versions.yml'), "- {version: 1}\n- {version: 2, effective_from: 2026-07-01}\n")
+        {1 => 50, 2 => 60}.each do |number, hourly|
+          File.write(File.join(blueprints, "rates/v#{number}/blueprint.yml"),
+                     "calculations: {hire: {inputs: {hours: {type: number}}, steps: [{name: total, formula: hours * #{hourly}}], outputs: [total]}}")
+        end
+      end
+
+      after { FileUtils.remove_entry(blueprints) }
+
+      it 'proves each example on the day it names, with the version of the import in force that day' do
+        expect(client.prove(invoice)).to include(problems: [], passed: 2, failed: 0)
+      end
+    end
+
     it 'runs a blueprint the engine ships when the folder has none of that name' do
       sessions = [{from: Time.new(2026, 11, 2, 16, 0, 0, '+11:00'), to: Time.new(2026, 11, 2, 22, 0, 0, '+11:00')}]
 

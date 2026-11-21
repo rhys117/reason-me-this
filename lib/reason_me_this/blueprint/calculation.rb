@@ -95,10 +95,11 @@ module ReasonMeThis
         @events << {name:, when: condition, data:}.compact
       end
 
-      # A worked example: facts with the outputs they should give, any of them, and the events they should set off.
-      #: (String, expect: Hash[Symbol, untyped], ?facts: Hash[Symbol, untyped], ?events: Array[Symbol]?) -> void
-      def example(name, expect:, facts: {}, events: nil)
-        @examples << {name:, facts:, expect:, events:}.compact
+      # A worked example: facts with the outputs they should give, any of them, and the events they should set off. on: is
+      # the day it runs on, which chooses the versions of what the blueprint imports; without it, today.
+      #: (String, expect: Hash[Symbol, untyped], ?facts: Hash[Symbol, untyped], ?events: Array[Symbol]?, ?on: Date?) -> void
+      def example(name, expect:, facts: {}, events: nil, on: nil)
+        @examples << {name:, facts:, expect:, events:, on:}.compact
       end
 
       #: -> Hash[Symbol, untyped]

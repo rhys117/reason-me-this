@@ -41,6 +41,21 @@ RSpec.describe ReasonMeThis::Blueprint do
     expect(described_class.define { calculation(:hire) { outputs :total } }.cases).to eq([])
   end
 
+  it 'writes the day an example runs on, for a blueprint whose imports change with the day' do
+    blueprint = described_class.define do
+      calculation(:hire) { example 'before July', on: Date.new(2026, 6, 30), facts: {hours: 1}, expect: {total: 50} }
+    end
+
+    expect(blueprint.cases_yaml).to eq(<<~YAML)
+      - name: before July
+        facts:
+          hours: 1
+        expect:
+          total: 50
+        'on': 2026-06-30
+    YAML
+  end
+
   it 'writes decimals exactly, dates as dates, times as ISO 8601 text, and a value used twice in full both times' do
     row = {from: Date.new(2026, 7, 1), opens: Time.new(2026, 7, 1, 9, 0, 0, '+10:00'), rate: BigDecimal('0.1000000000000000000001'), on: 'yes'}
     blueprint = described_class.define do
