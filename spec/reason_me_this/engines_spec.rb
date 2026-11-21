@@ -222,6 +222,16 @@ RSpec.describe ReasonMeThis::Engines do
 
       after { FileUtils.remove_entry(blueprints) }
 
+      it 'says which version of each import ran' do
+        FileUtils.mkdir_p(File.join(blueprints, 'invoice'))
+        File.write(File.join(blueprints, 'invoice/blueprint.yml'), invoice.yaml)
+
+        explained = client.explain('invoice', {hours: 1}, on: Date.new(2026, 6, 30))
+
+        expect(explained).to have_attributes(version: 'local', imports: {rates: 1})
+        expect(client.schema('invoice', on: Date.new(2026, 7, 1))['imports']).to eq('rates' => 2)
+      end
+
       it 'proves each example on the day it names, with the version of the import in force that day' do
         expect(client.prove(invoice)).to include(problems: [], passed: 2, failed: 0)
       end
