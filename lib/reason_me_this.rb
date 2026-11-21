@@ -47,7 +47,7 @@ module ReasonMeThis
       return Answer.new(answer) unless trace
 
       Explanation.new(outputs: Answer.new(answer[:outputs]), steps: answer[:steps], version: answer[:version],
-                      events: Array(answer[:events]).map { |event| Event.read(event) })
+                      events: Array(answer[:events]).map { |event| Event.read(event) }, imports: answer.fetch(:imports, {}))
     end
 
     def explain(name, facts, calculation: nil, version: nil, on: nil) = run(name, facts, calculation:, version:, on:, trace: true)

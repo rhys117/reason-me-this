@@ -81,11 +81,11 @@ RSpec.describe ReasonMeThis::Engines do
       expect { client.explain('../blueprints/room_hire', {hours: 1}) }.to raise_error(ReasonMeThis::Unsupported)
     end
 
-    it 'refuses a version or a day, since a blueprint file has no versions' do
-      [-> { client.run('room_hire@3', {hours: 1}) }, -> { client.run('room_hire', {hours: 1}, version: 'draft') },
-       -> { client.explain('room_hire', {hours: 1}, on: Date.new(2026, 7, 1)) }].each do |versioned|
-        expect(&versioned).to raise_error(ReasonMeThis::InvalidRequest, 'room_hire runs from a blueprint file with no versions, so version and on do not apply')
+    it 'refuses a version for a blueprint kept without versions, and runs it for a day, which chooses the versions it imports' do
+      [-> { client.run('room_hire@3', {hours: 1}) }, -> { client.run('room_hire', {hours: 1}, version: 'draft') }].each do |versioned|
+        expect(&versioned).to raise_error(ReasonMeThis::InvalidRequest, 'room_hire runs from a blueprint file with no versions, so version does not apply')
       end
+      expect(client.explain('room_hire', {hours: 1}, on: Date.new(2026, 7, 1))).to have_attributes(version: 'local')
     end
 
     it 'proves a blueprint written in Ruby by the examples it gives, as the service does' do
@@ -192,6 +192,48 @@ RSpec.describe ReasonMeThis::Engines do
 
         write('room_hire', hire(80), at: Time.at(2_000))
         expect(client.run('suite_hire', {hours: 2}).room[:total]).to eq(160)
+      end
+    end
+
+    context 'with a blueprint whose import is kept in versions' do
+      let(:blueprints) { Dir.mktmpdir }
+      let(:invoice) do
+        ReasonMeThis::Blueprint.define do
+          import :rates
+          calculation :invoice do
+            inputs { number :hours }
+            run :billed, :hire
+            outputs :billed
+            example 'before July', on: Date.new(2026, 6, 30), facts: {hours: 1}, expect: {billed: {total: 50}}
+            example 'from July', on: Date.new(2026, 7, 1), facts: {hours: 1}, expect: {billed: {total: 60}}
+          end
+        end
+      end
+
+      before do
+        FileUtils.mkdir_p(File.join(blueprints, 'rates/v1'))
+        FileUtils.mkdir_p(File.join(blueprints, 'rates/v2'))
+        File.write(File.join(blueprints, 'rates/versions.yml'), "- {version: 1}\n- {version: 2, effective_from: 2026-07-01}\n")
+        {1 => 50, 2 => 60}.each do |number, hourly|
+          File.write(File.join(blueprints, "rates/v#{number}/blueprint.yml"),
+                     "calculations: {hire: {inputs: {hours: {type: number}}, steps: [{name: total, formula: hours * #{hourly}}], outputs: [total]}}")
+        end
+      end
+
+      after { FileUtils.remove_entry(blueprints) }
+
+      it 'says which version of each import ran' do
+        FileUtils.mkdir_p(File.join(blueprints, 'invoice'))
+        File.write(File.join(blueprints, 'invoice/blueprint.yml'), invoice.yaml)
+
+        explained = client.explain('invoice', {hours: 1}, on: Date.new(2026, 6, 30))
+
+        expect(explained).to have_attributes(version: 'local', imports: {rates: 1})
+        expect(client.schema('invoice', on: Date.new(2026, 7, 1))['imports']).to eq('rates' => 2)
+      end
+
+      it 'proves each example on the day it names, with the version of the import in force that day' do
+        expect(client.prove(invoice)).to include(problems: [], passed: 2, failed: 0)
       end
     end
 

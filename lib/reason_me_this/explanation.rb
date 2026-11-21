@@ -3,8 +3,9 @@ module ReasonMeThis
     def self.read(event) = new(name: event[:name].to_sym, data: event.fetch(:data, {}))
   end
 
-  Explanation = Data.define(:outputs, :steps, :version, :events) do
-    def initialize(outputs:, steps:, version: nil, events: []) = super
+  # imports is the version each blueprint the definition imports by name ran at, "local" for one without versions.
+  Explanation = Data.define(:outputs, :steps, :version, :events, :imports) do
+    def initialize(outputs:, steps:, version: nil, events: [], imports: {}) = super
 
     def at(path)
       names = path.to_s.split('.')
