@@ -25,7 +25,12 @@ RSpec.describe ReasonMeThis::Engines do
       forget
     end
 
-    def forget = ReasonMeThis.configure { |config| config.to_h.each_key { |setting| config[setting] = nil } }
+    def forget
+      ReasonMeThis.configure do |config|
+        config.to_h.each_key { |setting| config[setting] = nil }
+        config.on_fallback
+      end
+    end
 
     def built(**settings)
       ReasonMeThis.configure do |config|
@@ -39,6 +44,28 @@ RSpec.describe ReasonMeThis::Engines do
       described_class.register(:abacus) { |blueprints:, native_loop: true| FakeConnection.new(200, 'native' => native_loop, 'folder' => blueprints) }
 
       expect(built).to eq(native: true, folder: nil)
+    end
+
+    it 'reads as on until a host says otherwise, and as what the host said after' do
+      read = [nil, false, :strict].map do |said|
+        ReasonMeThis.configure { |config| config.native_loop = said }
+        ReasonMeThis.configuration.native_loop
+      end
+
+      expect(read).to eq([true, false, :strict])
+    end
+
+    it 'hands an engine that takes one the block a host gives to be told what ran another way' do
+      told = []
+      described_class.register(:abacus) do |blueprints:, on_fallback: nil|
+        on_fallback&.call({kind: :fallback, blueprint: 'bill', folder: blueprints})
+        FakeConnection.new(200, {})
+      end
+      ReasonMeThis.configure { |config| config.on_fallback { |taken| told << taken } }
+
+      built(native_loop: :strict)
+
+      expect(told).to eq([{kind: :fallback, blueprint: 'bill', folder: nil}])
     end
 
     it 'reaches the engine when the configuration turns it off' do

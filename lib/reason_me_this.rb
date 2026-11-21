@@ -26,7 +26,7 @@ module ReasonMeThis
 
     def configuration = @configuration ||= Configuration.new
 
-    def default = @default ||= Client.new(**configuration.to_h.compact)
+    def default = @default ||= Client.new(**configuration.to_h.compact, on_fallback: configuration.fallback)
   end
 
   class Client
@@ -35,10 +35,10 @@ module ReasonMeThis
     REQUEST_PROBLEM = /\A(?:(?:on|effective_from) should be a date written YYYY-MM-DD, not |give version or on, not both\z)/
 
     # With engine, blueprints run in this process from the blueprints folder, and nothing is sent to a service.
-    def initialize(url: nil, api_key: nil, engine: nil, blueprints: nil, connection: nil, native_loop: nil)
+    def initialize(url: nil, api_key: nil, engine: nil, blueprints: nil, connection: nil, native_loop: nil, on_fallback: nil)
       raise Error.new('give a url or an engine, not both') if url && engine
 
-      @connection = connection || (engine ? Engines.connection(engine, blueprints:, native_loop:) : Connection.new(url, api_key))
+      @connection = connection || (engine ? Engines.connection(engine, blueprints:, native_loop:, on_fallback:) : Connection.new(url, api_key))
     end
 
     def run(name, facts, calculation: nil, version: nil, on: nil, trace: false)
